@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     #local
     'courses.apps.CoursesConfig',
     #third party
-    'pillow',
+    #'Pillow',
 ]
 
 MIDDLEWARE = [
