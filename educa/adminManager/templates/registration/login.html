@@ -17,6 +17,10 @@
     <input type="hidden" name="next" value="{% url 'user_home' %}" />
     <p><input type="submit" value="Log-in"></p>
     </form>
+    <p>NOt a memeber?</p>
+    <a href="{% url 'user_registration' 'teacher' %}">Register as Teacher</a>
+    <a href="{% url 'user_registration' 'student' %}">Register as Student</a>
+
 </div>
 </div>
 {% endblock %}
