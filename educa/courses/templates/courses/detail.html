@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}{{course.title}}{% endblock %}
+{% block content %}
+<a href="{% url 'logout' %}">Logout</a>
+
+<h1>{{course.title}}</h1>
+<p>{{course.overview}}</p>
+{%for module in modules%}
+    <div>
+        <h3>{{module.title}}</h3>
+        <p>{{module.description}}</p>
+        <a href="{%url 'update_module' course.id module.id %}">Edit</a>
+        <a href="{%url 'delete_module' course.id module.id %}">Delete</a>
+    </div>
+{%empty%}
+    <p>No modules yet</p>
+{%endfor%}
+<a href="{%  url 'create_module' course.id %}">Create module</a>
+{% endblock %}

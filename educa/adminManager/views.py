@@ -1,4 +1,4 @@
-from mimetypes import init
+from django.contrib.auth.models import Group
 from re import template
 from django.shortcuts import render,redirect
 from .models import User
@@ -32,6 +32,7 @@ class UserRegistrationView(View):
         if user_type == 'student':
             initial = self.student_initail
         return initial
+    
 
     def get(self,request,user_type=None,*args,**kwargs):
         initial = self.get_inital_of_user_type(user_type)
@@ -50,6 +51,8 @@ class UserRegistrationView(View):
                     password = copy.deepcopy(cd["password_1"])
                     instance.set_password(password)
                     instance.save()
+                    group = Group.objects.get(name=user_type)
+                    group.user_set.add(instance)
                     #print(instance.username,password)
                     user = authenticate(request, username=instance.username, password=password)
                     #print('user',user)

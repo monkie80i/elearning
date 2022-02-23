@@ -16,8 +16,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 from adminManager.admin import admin_site
+from django.contrib.auth.views import LoginView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('superadmin/',admin_site.urls),
+    path('',LoginView.as_view()),
+    path('accounts/',include('adminManager.urls')),
+    path('courses/',include('courses.urls')), 
 ]

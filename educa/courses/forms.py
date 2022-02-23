@@ -8,3 +8,9 @@ class CourseForm(forms.ModelForm):
             'subject','title','overview'
         ]
         
+class ModuleForm(forms.ModelForm):
+    class Meta:
+        model = Module
+        fields = [
+            'title','description'
+        ]

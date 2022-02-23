@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}{{title}}{% endblock %}
+{% block content %}
+<a href="{% url 'logout' %}">Logout</a>
+
+<a href="#">Create Module</a>
+{%if object %}
+    <h1>Update Module</h1>
+{%else%}
+    <h1>Create Module</h1>
+{%endif%}
+<form action="." method="post">
+    {{ form.as_p }}
+    {% csrf_token %}
+    <p><input type="submit" value="save"></p>
+    <p><input type="submit" name="add" value="save and add another"></p>
+</form>
+{% endblock %}
