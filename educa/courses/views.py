@@ -1,4 +1,5 @@
-from http.client import HTTPResponse
+
+from distutils.log import Log
 import imp
 from mimetypes import init
 from tempfile import template
@@ -8,7 +9,7 @@ from .models import Subject,Course,Module,Content
 from django.urls import reverse
 from .forms import CourseForm,ModuleForm
 from django.shortcuts import get_object_or_404
-from django.http import Http404
+from django.http import Http404,HttpResponse
 #from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import DeleteView #CreateView, UpdateView,
@@ -16,6 +17,9 @@ from django.core.exceptions import ObjectDoesNotExist
 import copy,traceback,sys,json
 from django.forms.models import model_to_dict
 from django.contrib.auth.mixins import LoginRequiredMixin,PermissionRequiredMixin
+from django.apps import apps
+from django.forms.models import modelform_factory
+from django.forms import Form
 
 # Create your views here.
 class SubjectQSMixin(object):
@@ -210,3 +214,77 @@ class ModuleDeleteView(CourseModuleMixin,DeleteView,PermissionRequiredMixin):
         return super().setup(request, *args, **kwargs)
 
 module_delete_view =ModuleDeleteView.as_view()
+
+
+#CONTENT
+class ContentCreateUpdateView(View,LoginRequiredMixin):
+    Model = None
+    module = None
+    obj = None
+    template_name =  'contents/form.html'
+
+    def get_model(self,model_name):
+        if model_name in ('text','image','file','video'):
+            return apps.get_model(app_label='courses',model_name=model_name)
+        return None
+    
+    def get_form(self,model,*args,**kwargs):
+        Form =  modelform_factory(model=model,exclude=['owner','created','updated'])
+        return Form(*args,**kwargs)
+
+    def dispatch(self, request,module_id,model_name,id=None, *args, **kwargs):
+        self.Model = self.get_model(model_name)
+        self.module =get_object_or_404(Module,id=module_id,course__user=request.user)# this will ensure only the owner can edit this modlue
+        if id:
+            self.obj = get_object_or_404(self.Model,id=id,owner = request.user)
+        return super().dispatch(request,module_id,model_name,id=None, *args, **kwargs)
+
+    def get(self, request,module_id,model_name,id=None):
+        form = self.get_form(self.Model,instance=self.obj)
+        context_obj = {
+            'form':form,
+            'object':self.obj
+        }
+        return render(request,self.template_name,context_obj)
+
+    def post(self, request,module_id,model_name,id=None):
+        form = self.get_form(self.Model,instance=self.obj,data=request.POST,files=request.FILES)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.owner = request.user
+            obj.save()
+            if not id:
+                Content.objects.create(module = self.module,item=obj)
+            #redirect to content list later 'module_content_list'
+            return HttpResponse('Good')
+        return render(request,self.template_name,{'form':form,'object':self.obj})
+
+content_create_update_view = ContentCreateUpdateView.as_view()
+
+class ContentDeleteView(View,LoginRequiredMixin):
+    content_obj = None
+    template_name = 'modules/delete.html'
+    #permission_required = 'module.delete_module'
+
+    def dispatch(self, request,content_id, *args, **kwargs):
+        self.content_obj = get_object_or_404(Content,id=content_id,module__course__user=request.user)
+        return super().dispatch(request, content_id,*args, **kwargs)
+
+    def get(self,request,content_id, *args, **kwargs):
+        form = Form
+        context_obj = {
+            'form':form,
+            'object':self.content_obj
+        }
+        return render(request,self.template_name,context_obj)
+    
+    def post(self,request,content_id, *args, **kwargs):
+        module = self.content_obj.module
+        self.content_obj.item.delete()
+        self.content_obj.delete()
+        #return redirect('module_content_list',module.id)
+        return HttpResponse('Success')
+
+        
+content_delete_view =ContentDeleteView.as_view()
+

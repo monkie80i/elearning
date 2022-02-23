@@ -1,3 +1,4 @@
+from importlib.resources import contents
 from re import sub
 from turtle import title
 from urllib import response
@@ -193,4 +194,80 @@ class InstructorPermissionTestCase(TestCase):
         self.assertEqual(user.groups.first().name,'teacher')
         s_client = Client()
         response = s_client.post(reverse_lazy('user_registration',args=['student']),data=self.s1_data)
+
+class ContentCreateUpdateTestCase(TestCase):
+    def setUp(self):
+        self.password = 'teacher1234'
+        self.username='teacher1'
+        self.username2 ='student1'
+        self.password2 = 'student1234'
+        self.t1 = User.objects.create_user(
+            username=self.username,
+            password=self.password,
+            email='ashdksj@gmail.com',
+            is_student=False,
+            is_teacher=True
+        )
+
+        self.s1 = User.objects.create_user(
+            username=self.username2,
+            password=self.password2,
+            email='ashdksj@gmail.com',
+            is_student=True,
+            is_teacher=False
+        )
+
+        self.co1 = Course.objects.create(user=self.t1,title='Course1')
+        self.mo1 =  Module.objects.create(course=self.co1,title='Module1')
+        
+        self.tclent = Client()
+        self.tclent.login(username=self.username,password=self.password)
+        #self.sclent = Client()
+        #self.sclent.login(username=self.username2,password=self.password2)
+
+    def test_owner_creation_updation_dlete(self):
+        response = self.tclent.get(reverse_lazy('create_content',args=[self.mo1.id,'text']))
+        self.assertEqual(response.status_code,200)
+        data =  {
+            'title':"New Old Content",
+            'content':"This is Old content"
+        }
+        response = self.tclent.post(reverse_lazy('create_content',args=[self.mo1.id,'text']),data=data)
+        self.assertEqual(response.status_code,200)
+        
+        text = Content.objects.filter(module=self.mo1).first()
+        self.assertEqual(text.item.owner,self.t1)
+        item=text.item
+        #print(item.owner,item.title,item.content)
+        self.assertEqual(text.item.title,data['title'])
+
+        response = self.tclent.get(reverse_lazy('update_content',args=[self.mo1.id,'text',item.id]))
+        self.assertEqual(response.status_code,200)
+
+        new_data =  {
+            'title':"New Text Content",
+            'content':"This is new content"
+        }
+        response = self.tclent.post(reverse_lazy('update_content',args=[self.mo1.id,'text',item.id]),data=new_data)
+        self.assertEqual(response.status_code,200)
+
+        content = Content.objects.filter(module=self.mo1).first()
+        nitem = content.item
+        self.assertEqual(nitem.owner,self.t1)
+        self.assertEqual(nitem.title,new_data['title'])
+        
+        #delteion
+        #print('cid:',content.id)
+        response = self.tclent.get(reverse_lazy('delete_content',args=[content.id]))
+        self.assertEqual(response.status_code,200)
+        print(response.content)
+        response = self.tclent.post(reverse_lazy('delete_content',args=[content.id]))
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(Content.objects.filter(id=content.id).exists(),False)
+        
+    def test_non_owner_creation_updation(self):
+        pass
+
+    def test_student_creation_updation(self):
+        pass
 
