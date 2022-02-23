@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load course %}
+{% block title %}Manage Module Content List{% endblock %}
+{% block content %}
+<a href="{% url 'logout' %}">Logout</a>
+{% with course=module.course all_modules=module.course.modules.all %}
+<h1>{{course.title}}</h1>
+<div id="module-list">
+    {%for mod in all_modules %}
+    <div data-order="{{mod.order}}" id="{{mod.id}}">
+        <h3>{{mod.title}}</h3>
+        <a href="{%url 'module_content_list' mod.id%}">View</a>
+        <a href="{%url 'update_module' course.id mod.id%}">Edit</a>
+        <a href="{%url 'delete_module' course.id mod.id%}">Delete</a>
+    </div>
+    {%empty%}
+    <p>No modules yet</p>
+    <a href="{%url 'create_module' course.id %}">Add Module</a>
+    {%endfor%}
+</div>
+<div id="module" style="border: 1px solid black;">
+    <h2>{{module.title}}</h2>
+    <p>{{module.description}}</p>
+    <div id="content">
+        {%for content in module.contents.all %}
+            {% with item=content.item %}
+                <p>{{item.title}}</p>
+                <a href="{%url 'update_content' module.id item|model_name item.id%}">Edit</a>
+                <a href="{%url 'delete_content' module.id %}">Delete</a>
+            {%endwith%}
+        {%empty%}
+            <p>No Content Yet</p>
+        {%endfor%}
+        <p>Add content</p>
+        <a href="{%url 'create_content' module.id 'text'%}">text</a>
+        <a href="{%url 'create_content' module.id 'image'%}">image</a>
+        <a href="{%url 'create_content' module.id 'file'%}">file</a>
+        <a href="{%url 'create_content' module.id 'video'%}">video</a>
+
+    </div>
+
+</div>
+{%endwith%}
+
+
+
+{% endblock %}
