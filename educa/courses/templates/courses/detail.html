@@ -10,6 +10,7 @@
     <div>
         <h3>{{module.title}}</h3>
         <p>{{module.description}}</p>
+        <a href="{%url 'module_content_list' module.id %}">View</a>
         <a href="{%url 'update_module' course.id module.id %}">Edit</a>
         <a href="{%url 'delete_module' course.id module.id %}">Delete</a>
     </div>

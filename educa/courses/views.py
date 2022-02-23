@@ -256,7 +256,7 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
             if not id:
                 Content.objects.create(module = self.module,item=obj)
             #redirect to content list later 'module_content_list'
-            return HttpResponse('Good')
+            return redirect('module_content_list',module_id)
         return render(request,self.template_name,{'form':form,'object':self.obj})
 
 content_create_update_view = ContentCreateUpdateView.as_view()
@@ -288,3 +288,13 @@ class ContentDeleteView(View,LoginRequiredMixin):
         
 content_delete_view =ContentDeleteView.as_view()
 
+#Manage Content
+class ManageModuleContentList(View,LoginRequiredMixin):
+    template_name = 'contents/list.html'
+
+    def get(self,request,module_id,*args,**kwargs):
+        module = get_object_or_404(Module,id=module_id,course__user=request.user)
+        return render(request,self.template_name,{'module':module})
+
+
+manage_module_content_list = ManageModuleContentList.as_view()

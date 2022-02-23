@@ -14,6 +14,7 @@
         <div>
             <h2>{{course.title}}</h2>
             <p>{{course.overview}}</p>
+            <a href="{%url 'course_detail' course.id %}">View</a>
             <a href="{% url 'course_update' course.id %}">Edit</a>
             <a href="{% url 'course_delete' course.id %}">delete</a>
         </div>
