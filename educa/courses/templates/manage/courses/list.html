@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Course List{% endblock %}
+{% block content %}
+<h1>THese are yous courses</h1>
+{% if subejct %}
+    <p>selected subject{{subject}}</p>
+{%endif%}
+<a href="{% url 'logout' %}">Logout</a>
+
+<div id="course-list">
+    {% for course in object_lsit %}
+    <a href="{% url 'course_detail' course.id %}">
+        <div>
+            <h2>{{course.title}}</h2>
+            <p>{{course.overview}}</p>
+            <a href="{%url 'course_detail' course.id %}">View</a>
+            <a href="{% url 'course_update' course.id %}">Edit</a>
+            <a href="{% url 'course_delete' course.id %}">delete</a>
+        </div>
+    </a>
+        
+    {% empty %}
+        <p>You have not creatd any courses</p>
+    {% endfor %}
+</div>
+{% if subjects %}
+    <div>
+        <span>Filter by</span>
+        {% for sub in all_subjects %}
+        <a href="{% url 'manage_course_list' sub %}">{{sub}}</a>
+        {%endfor%}
+    </div>
+{%endif%}
+<a href="{% url 'manage_course_list' 'all' %}">Create Course</a>
+{% endblock %}

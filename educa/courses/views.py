@@ -38,8 +38,8 @@ class OwnerMixin(object):
 class OwnerCourseMixin(OwnerMixin,SubjectQSMixin,LoginRequiredMixin,PermissionRequiredMixin):
     model = Course
     fields = ['subject', 'title', 'slug', 'overview']
-    list_template_name = 'courses/list.html'
-    edit_template_name = 'courses/form.html'
+    list_template_name = 'manage/courses/list.html'
+    edit_template_name = 'manage/courses/form.html'
 
 class ManageCourseView(OwnerCourseMixin,View):
     permission_required = 'courses.view_course'
@@ -70,7 +70,7 @@ class CourseCreateView(OwnerCourseMixin,View):
                 instance = form.save(commit=False)
                 instance.user = request.user
                 instance.save()
-                return redirect(reverse('course_list',args=['all']))
+                return redirect(reverse('manage_course_list',args=['all']))
             except Exception as e:
                 traceback.print_exc(file=sys.stdout)
                 print('e:',e)
@@ -85,7 +85,7 @@ course_create_view = CourseCreateView.as_view()
 
 class CourseUpdateView(OwnerCourseMixin,View):
     permission_required = 'courses.change_course'
-    template_name = 'courses/form.html'
+    template_name = 'manage/courses/form.html'
     form_class = CourseForm
 
     def get(self,request,id):
@@ -108,7 +108,7 @@ class CourseUpdateView(OwnerCourseMixin,View):
             form = self.form_class(request.POST or None,instance=course_obj)
             if form.is_valid():
                 form.save()
-                return redirect(reverse('course_list',args=['all']))
+                return redirect(reverse('manage_course_list',args=['all']))
                 #change to detail
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
@@ -121,13 +121,13 @@ course_update_view = CourseUpdateView.as_view()
 class CourseDeleteView(OwnerCourseMixin,DeleteView):
     permission_required = 'courses.delete_course'
     success_url = '/courses/course/list/all/'
-    template_name = 'courses/delete.html'
+    template_name = 'manage/courses/delete.html'
     #permission_required = 'courses.delete_course'
 
 course_delete_view =CourseDeleteView.as_view()
 
 class CourseDetailView(OwnerCourseMixin,View):
-    template_name = 'courses/detail.html'
+    template_name = 'manage/courses/detail.html'
     permission_required = 'courses.view_course'
 
     def get(self,request,id):
@@ -150,7 +150,7 @@ course_detail_view = CourseDetailView.as_view()
 class CourseModuleMixin(LoginRequiredMixin):
     model = Module
     fields = ['title', 'description']
-    edit_template_name = 'modules/form.html'
+    edit_template_name = 'manage/modules/form.html'
     
 class ModuleCreateUpdateView(CourseModuleMixin,View):
     form_class = ModuleForm
@@ -206,7 +206,7 @@ class ModuleCreateUpdateView(CourseModuleMixin,View):
 module_create_update_view = ModuleCreateUpdateView.as_view()
 
 class ModuleDeleteView(CourseModuleMixin,DeleteView,PermissionRequiredMixin):
-    template_name = 'modules/delete.html'
+    template_name = 'manage/modules/delete.html'
     permission_required = 'module.delete_module'
     #permission_required = 'courses.delete_course'
     def setup(self, request,course_id, *args, **kwargs):
@@ -221,7 +221,7 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
     Model = None
     module = None
     obj = None
-    template_name =  'contents/form.html'
+    template_name =  'manage/contents/form.html'
 
     def get_model(self,model_name):
         if model_name in ('text','image','file','video'):
@@ -263,7 +263,7 @@ content_create_update_view = ContentCreateUpdateView.as_view()
 
 class ContentDeleteView(View,LoginRequiredMixin):
     content_obj = None
-    template_name = 'modules/delete.html'
+    template_name = 'manage/modules/delete.html'
     #permission_required = 'module.delete_module'
 
     def dispatch(self, request,content_id, *args, **kwargs):
@@ -290,7 +290,7 @@ content_delete_view =ContentDeleteView.as_view()
 
 #Manage Content
 class ManageModuleContentList(View,LoginRequiredMixin):
-    template_name = 'contents/list.html'
+    template_name = 'manage/contents/list.html'
 
     def get(self,request,module_id,*args,**kwargs):
         module = get_object_or_404(Module,id=module_id,course__user=request.user)

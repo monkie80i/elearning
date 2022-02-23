@@ -11,6 +11,21 @@
     
 </div>
 {% if user.is_teacher %}
-    <a href="{% url 'course_list' 'all' %}">My Courses</a>
+
+    <div>
+        <h2>My Courses</h2>
+        {%for course in courses %}
+            <div id="course-{{course.id}}">
+                <h3>{{course.title}}</h3>
+                <p>{{course.overview}}</p>
+                <!--add enrolled annotate-->
+                <a href="{%url 'course_detail' course.id %}">View</a>
+            </div>
+        {%empty%}
+            <p>No courses yet</p>
+        {%endfor%}
+        <a href="{% url 'course_create' %}">Add a course</a>
+        <a href="{% url 'manage_course_list' 'all' %}">View all</a>
+    </div>
 {%endif%}
 {% endblock %}

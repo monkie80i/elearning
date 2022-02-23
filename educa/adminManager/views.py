@@ -1,6 +1,8 @@
 from django.contrib.auth.models import Group
 from re import template
 from django.shortcuts import render,redirect
+
+from courses.models import Course
 from .models import User
 from .forms import UserForm
 from django.http import HttpResponseRedirect,HttpResponse
@@ -9,16 +11,34 @@ import copy,traceback,sys
 from django.urls import reverse,reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
-
+from django.contrib.auth.mixins import LoginRequiredMixin,PermissionRequiredMixin
 # Create your views here.
 
-@login_required
-def user_home_view(request):
+
+
+class UserHomeView(View,LoginRequiredMixin):
     template_name = 'accounts/home.html'
-    user = request.user
-    #user = User.objects.get(id=1)
-    if request.method == 'GET':
-        return render(request,template_name,{'user': user })
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.user = request.user
+        if self.user.is_teacher:
+            courses = Course.objects.filter(user = request.user)
+            self.courses = courses[:10] if len(courses)>10 else courses
+            self.context_object = {
+                'courses':self.courses,
+                'user':self.user
+            }
+        if self.user.is_student:
+            self.context_object = {
+                'courses':None,
+                'user':self.user
+            }
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get(self, request, *args, **kwargs):
+        return render(request,self.template_name,self.context_object)
+
+user_home_view = UserHomeView.as_view()
 
 class UserRegistrationView(View):
     template_name = 'registration/register.html'

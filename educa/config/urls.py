@@ -21,7 +21,6 @@ from django.contrib.auth.views import LoginView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('superadmin/',admin_site.urls),
-    path('',LoginView.as_view()),
-    path('accounts/',include('adminManager.urls')),
+    path('',include('adminManager.urls')),
     path('courses/',include('courses.urls')), 
 ]

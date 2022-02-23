@@ -94,10 +94,10 @@ class CourseViewsTestCase(TestCase):
         self.assertEqual(c.title,data['title'])
         self.assertEqual(response.status_code,302)
     
-    def test_course_list(self):
-        response = self.t_client.get(reverse_lazy('course_list',args=['all']))
+    def test_manage_course_list(self):
+        response = self.t_client.get(reverse_lazy('manage_course_list',args=['all']))
         self.assertEqual(response.status_code,200)
-        response = self.s_client.get(reverse_lazy('course_list',args=['all']))
+        response = self.s_client.get(reverse_lazy('manage_course_list',args=['all']))
         self.assertEqual(response.status_code,200)
     
 
