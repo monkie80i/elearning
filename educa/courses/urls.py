@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import manage_course_view,course_create_view,course_update_view,course_delete_view,module_create_update_view,course_detail_view,module_delete_view,content_create_update_view,content_delete_view,manage_module_content_list,course_list_view,public_course_detail
+from .views import manage_course_view,course_create_view,course_update_view,course_delete_view,module_create_update_view,course_detail_view,module_delete_view,content_create_update_view,content_delete_view,manage_module_content_list,course_list_view,public_course_detail,course_enroll_view,student_course_detail_view,student_course_list_view
 
 urlpatterns = [
     path('manage/course/list/<str:subject>/',manage_course_view,name='manage_course_list'),
@@ -16,6 +16,9 @@ urlpatterns = [
     path('manage/module/<int:module_id>/',manage_module_content_list,name='module_content_list'),
     path('',course_list_view,name='course_list'),
     path('subject/<slug:subject>/',course_list_view,name='course_list_subject'),
-    path('course/<int:id>/',public_course_detail,name="public_course_detail")
-    
+    path('course/<int:id>/',public_course_detail,name="public_course_detail"),
+    path('enroll-course/',course_enroll_view,name="student_enroll_course"),
+    path('enrolled/list/',student_course_list_view,name='student_course_list'),
+    path('enrolled/course/<course_id>/',student_course_detail_view,name='student_course_detail'),
+    path('enrolled/course/<course_id>/<module_id>/',student_course_detail_view,name='student_course_detail_module'),
 ]

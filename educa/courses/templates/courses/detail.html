@@ -13,4 +13,14 @@
 <p>Instructor:{{course.user.username}}</p>
 <p>{{course.modules.count}} modules</p>
 
+{% if request.user.is_authenticated and request.user.is_student%}
+    <form action="{%url 'student_enroll_course' %}" method="post">
+        {{form.as_p}}
+        {% csrf_token %}
+        <p><input type="submit" value="Enroll Now"></p>   
+    </form>
+{%else%}
+<a href="{% url 'user_registration' 'student' %}">Register To Enroll</a>
+{%endif%}
+    
 {% endblock %}

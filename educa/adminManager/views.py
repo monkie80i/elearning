@@ -29,8 +29,9 @@ class UserHomeView(View,LoginRequiredMixin):
                 'user':self.user
             }
         if self.user.is_student:
+            courses = Course.objects.filter(students=self.user)[:10]
             self.context_object = {
-                'courses':None,
+                'courses':courses,
                 'user':self.user
             }
         return super().dispatch(request, *args, **kwargs)

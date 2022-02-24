@@ -2,13 +2,14 @@
 from distutils.log import Log
 import imp
 from mimetypes import init
+from multiprocessing import context
 from tempfile import template
 from typing import Reversible
 from django.shortcuts import render,redirect
 from django.views import View
 from .models import Subject,Course,Module,Content
-from django.urls import reverse
-from .forms import CourseForm,ModuleForm
+from django.urls import reverse_lazy
+from .forms import CourseForm,ModuleForm,CourseEnrollForm
 from django.shortcuts import get_object_or_404
 from django.http import Http404,HttpResponse
 #from django.views.generic.list import ListView
@@ -72,7 +73,7 @@ class CourseCreateView(OwnerCourseMixin,View):
                 instance = form.save(commit=False)
                 instance.user = request.user
                 instance.save()
-                return redirect(reverse('manage_course_list',args=['all']))
+                return redirect(reverse_lazy('manage_course_list',args=['all']))
             except Exception as e:
                 traceback.print_exc(file=sys.stdout)
                 print('e:',e)
@@ -110,7 +111,7 @@ class CourseUpdateView(OwnerCourseMixin,View):
             form = self.form_class(request.POST or None,instance=course_obj)
             if form.is_valid():
                 form.save()
-                return redirect(reverse('manage_course_list',args=['all']))
+                return redirect(reverse_lazy('manage_course_list',args=['all']))
                 #change to detail
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
@@ -212,7 +213,7 @@ class ModuleDeleteView(CourseModuleMixin,DeleteView,PermissionRequiredMixin):
     permission_required = 'module.delete_module'
     #permission_required = 'courses.delete_course'
     def setup(self, request,course_id, *args, **kwargs):
-        self.success_url = reverse('course_detail',args=[course_id])
+        self.success_url = reverse_lazy('course_detail',args=[course_id])
         return super().setup(request, *args, **kwargs)
 
 module_delete_view =ModuleDeleteView.as_view()
@@ -231,7 +232,7 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
         return None
     
     def get_form(self,model,*args,**kwargs):
-        Form =  modelform_factory(model=model,exclude=['owner','created','updated'])
+        Form =  modelform_factory(model=model,exclude=['order','owner','created','updated'])
         return Form(*args,**kwargs)
 
     def dispatch(self, request,module_id,model_name,id=None, *args, **kwargs):
@@ -250,7 +251,13 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
         return render(request,self.template_name,context_obj)
 
     def post(self, request,module_id,model_name,id=None):
-        form = self.get_form(self.Model,instance=self.obj,data=request.POST,files=request.FILES)
+        form = self.get_form(
+            self.Model,
+            instance=self.obj,
+            data=request.POST,
+            files=request.FILES
+        )
+        #print('files',request.FILES)
         if form.is_valid():
             obj = form.save(commit=False)
             obj.owner = request.user
@@ -325,6 +332,48 @@ class PublicCourseDetailView(View):
 
     def get(self,request,id, *args, **kwargs):
         course = get_object_or_404(Course,id=id)
-        return render(request,self.template_name,{'course':course})
+        form = CourseEnrollForm(initial={'course':course})
+        context_obj = {
+            'course':course,
+            'form':form
+        }
+        return render(request,self.template_name,context_obj)
 
 public_course_detail = PublicCourseDetailView.as_view()
+
+class CourseEnrollView(View,LoginRequiredMixin):
+    form_class = CourseEnrollForm
+
+    def get_success_url(self):
+        return reverse_lazy('student_course_detail',self.course.id)
+
+    def post(self,request):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            self.course = form.cleaned_data['course']
+            self.course.students.add(self.request.user)
+            return redirect('student_course_detail',self.course.id)
+
+course_enroll_view = CourseEnrollView.as_view()
+
+class StudentCourseDetailView(View,LoginRequiredMixin):
+    template_name = 'students/course/detail.html'
+    def get(self,request,course_id,*args,**kwargs):
+        course = get_object_or_404(Course,id=course_id,students=request.user)
+        context = {'course':course}
+        if 'module_id' in self.kwargs:
+            context['module'] = get_object_or_404(Module,id=self.kwargs['module_id'])
+        else:
+            context['module'] = course.modules.all().first()
+        return render(request,self.template_name,context)
+
+student_course_detail_view = StudentCourseDetailView.as_view()
+
+class StudentCourseListView(View,LoginRequiredMixin):
+    template_name = 'students/course/detail.html'
+
+    def get(self,request):
+        courses = Course.objects.filter(students__in=[request.user])
+        return render(request,self.template_name,{'course':courses})
+
+student_course_list_view = StudentCourseListView.as_view()

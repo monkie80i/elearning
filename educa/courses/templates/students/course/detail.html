@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+
+
+{% block title %}{{course.title}}{% endblock %}
+{% block content %}
+
+<a href="{% url 'logout' %}">Logout</a>
+{% with all_modules=course.modules.all %}
+<h1>{{course.title}}</h1>
+<div id="module-list">
+    {%for mod in all_modules %}
+    <div data-order="{{mod.order}}" id="{{mod.id}}">
+        <h3>{{mod.title}}</h3>
+        <a href="{%url 'student_course_detail_module' course.id mod.id %}">View</a>
+    </div>
+    {%empty%}
+    <p>No modules yet</p>
+    {%endfor%}
+</div>
+<div id="module" style="border: 1px solid black;">
+    <h2>{{module.title}}</h2>
+    <p>{{module.description}}</p>
+    <div id="content">
+        {%for content in module.contents.all %}
+            {% with item=content.item %}
+                <p>{{item.title}}</p>
+                {{item.render}}
+            {%endwith%}
+        {%empty%}
+            <p>No Content Yet</p>
+        {%endfor%}
+    </div>
+</div>
+{%endwith%}
+
+
+{% endblock %}
