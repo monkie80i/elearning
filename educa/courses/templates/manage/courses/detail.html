@@ -2,8 +2,12 @@
 
 {% block title %}{{course.title}}{% endblock %}
 {% block content %}
+{%if request.user.is_authenticated %}
 <a href="{% url 'logout' %}">Logout</a>
-
+<a href="{% url 'user_home' %}">Home</a>
+{%else%}
+<a href="{% url 'login' %}">Login</a>
+{%endif%}
 <h1>{{course.title}}</h1>
 <p>{{course.overview}}</p>
 {%for module in modules%}

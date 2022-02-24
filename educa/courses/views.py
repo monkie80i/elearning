@@ -3,6 +3,7 @@ from distutils.log import Log
 import imp
 from mimetypes import init
 from tempfile import template
+from typing import Reversible
 from django.shortcuts import render,redirect
 from django.views import View
 from .models import Subject,Course,Module,Content
@@ -20,6 +21,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin,PermissionRequiredMixi
 from django.apps import apps
 from django.forms.models import modelform_factory
 from django.forms import Form
+from django.db.models import Count
 
 # Create your views here.
 class SubjectQSMixin(object):
@@ -120,7 +122,7 @@ course_update_view = CourseUpdateView.as_view()
 
 class CourseDeleteView(OwnerCourseMixin,DeleteView):
     permission_required = 'courses.delete_course'
-    success_url = '/courses/course/list/all/'
+    success_url = 'manage/course/list/all'
     template_name = 'manage/courses/delete.html'
     #permission_required = 'courses.delete_course'
 
@@ -180,13 +182,14 @@ class ModuleCreateUpdateView(CourseModuleMixin,View):
 
     def post(self,request,course_id,id=None):
         try:
+            try:
+                is_add_another = request.POST.dict().pop('add')
+            except:
+                is_add_another=False
             if id:
                 form = self.form_class(request.POST or None,instance=self.module)
             else:
-                form =  self.form_class()
-            data=request.POST.dict()
-            is_add_another = 'add' in data.keys()
-            print('data:',data)
+                form =  self.form_class(request.POST)
             if form.is_valid():
                 if not id :
                     instance = form.save(commit=False)
@@ -195,9 +198,8 @@ class ModuleCreateUpdateView(CourseModuleMixin,View):
                 else:
                     form.save()
                 if is_add_another:
-                    forms = self.form_class()
-                    return render(request,self.edit_template_name,{'form':form})
-            return redirect(reverse('course_detail',args=[course_id]))
+                    return redirect('create_module',course_id)
+            return redirect('course_detail',course_id)
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
             print('e:',e)
@@ -298,3 +300,31 @@ class ManageModuleContentList(View,LoginRequiredMixin):
 
 
 manage_module_content_list = ManageModuleContentList.as_view()
+
+#public views
+class CourseListView(View):
+    template_name = 'courses/list.html'
+    
+    def get(self,request,subject=None, *args, **kwargs):
+        subjects = Subject.objects.annotate(total_courses = Count('courses'))
+        courses = Course.objects.annotate(total_modules=Count('modules'))
+        if subject:
+            subject = get_object_or_404(Subject,slug=subject)
+            courses = courses.filter(subject=subject)
+        context_obj = {
+            'courses':courses,
+            'subjects':subjects,
+            'subject':subject
+        }
+        return render(request,self.template_name,context_obj)
+
+course_list_view = CourseListView.as_view()
+
+class PublicCourseDetailView(View):
+    template_name = 'courses/detail.html'
+
+    def get(self,request,id, *args, **kwargs):
+        course = get_object_or_404(Course,id=id)
+        return render(request,self.template_name,{'course':course})
+
+public_course_detail = PublicCourseDetailView.as_view()

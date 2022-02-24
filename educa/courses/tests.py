@@ -128,8 +128,6 @@ class ModuleCreateUpdateTestCase(TestCase):
         self.course1 = Course.objects.create(user=self.t1,subject = self.subject_objects['science'],title='Course 1')
 
 
-
-
     def test_module_creat_update(self):
         data = {
             'title':'My Title',
@@ -159,6 +157,32 @@ class ModuleCreateUpdateTestCase(TestCase):
     def test_module_delete(self):
         m1 = Module.objects.create(course=self.course1,title='Olc Module')
         pass
+
+    def test_create_and_add_another(self):
+        data = {
+            'title':'My Title',
+            'description':'This is desc',
+            'add':'dfsfd'
+        }
+
+        response = self.clent.post(reverse_lazy('create_module',args=[self.course1.id]),data)
+        self.assertEqual(response.url,'/course/1/module/create/')
+        all_module= Module.objects.all()
+        print('all modules:',all_module[0].course)
+        self.assertEqual(Module.objects.all().exists(),True)
+        self.assertEqual(Module.objects.filter(course__id=self.course1.id).exists(),True)
+    
+    def test_update_and_add_another(self):
+        m1 = Module.objects.create(course=self.course1,title='Olc Module')
+        new_data = {
+            'title':'My New Title',
+            'description':'This is New desc',
+            'add':'dfsfd'
+        }
+        self.assertEqual(Module.objects.filter(course__id=self.course1.id).first().title,'Olc Module')
+        response = self.clent.post(reverse_lazy('update_module',args=[self.course1.id,m1.id]),new_data)
+        self.assertEqual(response.url,f'/course/{self.course1.id}/module/create/')
+        self.assertEqual(Module.objects.filter(course__id=self.course1.id).first().title,'My New Title')
         
 class InstructorPermissionTestCase(TestCase):
     def setUp(self):
