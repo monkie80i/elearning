@@ -13,19 +13,21 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from re import template
 from django.contrib import admin
 from django.urls import path,include
 from adminManager.admin import admin_site
 from django.contrib.auth.views import LoginView
 from django.conf import settings
 from django.conf.urls.static import static
-
+from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('superadmin/',admin_site.urls),
     path('',include('adminManager.urls')),
     path('',include('courses.urls')), 
+    path('webpack-test/',TemplateView.as_view(template_name='test.html')),
 ]
 
 if settings.DEBUG:

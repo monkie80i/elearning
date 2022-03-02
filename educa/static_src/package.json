@@ -5,12 +5,15 @@
   "main": "index.js",
   "scripts": {
     "compile:sass": "sass scss:../static/css",
-    "compile:sass:watch": "sass --wathc scss:../static/css"
+    "compile:sass:watch": "sass --wathc scss:../static/css",
+    "bundle:test": "webpack --mode development --watch"
   },
   "author": "Shahzan Sadick",
   "license": "ISC",
   "devDependencies": {
-    "sass": "^1.49.9"
+    "sass": "^1.49.9",
+    "webpack": "^5.69.1",
+    "webpack-cli": "^4.9.2"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.0.0",
