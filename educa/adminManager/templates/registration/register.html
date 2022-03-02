@@ -6,7 +6,7 @@
 {% if error %}
     <p>{{error}}</p>
 {%endif%}
-<form action="{% url 'user_registration' 'teacher' %}" method="post">
+<form action="" method="post">
     {{ form.as_p }}
     {% csrf_token %}
     <p><input type="submit" value="Submit"></p>
