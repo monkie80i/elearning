@@ -1,0 +1,45 @@
+@use "../custom" as *;
+
+@mixin my-btn-mixin($color) {
+    
+    &-solid {
+        background-color: $color;
+        border-radius: 0;
+        color: $white;
+
+        &:hover{
+            background-color: transparent;
+            border-radius: 0;
+            color: $color;
+            border: 1px solid $color;
+        }
+
+    }
+
+
+    &-outline {
+        background-color: transparent;
+        border-radius: 0;
+        color: $color;
+        border: 1px solid $color;
+
+        &:hover{
+            background-color: $color;
+            border-radius: 0;
+            color: $white;
+        }
+    }
+}
+
+
+@mixin gradient {
+    background: rgb(35,206,107);
+    background: linear-gradient(157deg, rgba(35,206,107,1) 0%, rgba(35,206,187,1) 100%);
+}
+
+@mixin absolute-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+}

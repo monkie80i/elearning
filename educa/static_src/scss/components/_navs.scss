@@ -1,0 +1,75 @@
+@use "../custom" as *;
+@use "mixins" as *;
+
+//Navbar
+
+
+
+
+.navbar-nav{
+    .nav-item{
+        .nav-link {
+            font-size: larger;
+            color: $white !important;
+            text-transform: capitalize;
+            
+        }
+
+        .nav-link.active{
+            font-weight: bold;
+
+        }
+    }
+}
+.navbar-brand{
+    font-size: 2rem;
+    text-transform: uppercase;
+}
+
+//Pagination
+
+.pagination{
+    .page-item{
+        .page-link{
+            padding: 0.5rem 1rem;
+            background-color: $primary;
+            font-size: 1.25rem;
+            color: $white;
+        }
+    }
+}
+
+.sidenav {
+    min-height: 100vh;
+    @include media-breakpoint-down(sm){
+        min-height: 0;
+    }
+    .nav-item{
+        text-align: center;
+
+        &:hover{
+            background-color: $emerald-dark;
+        }
+
+        .nav-link {
+            font-size: larger;
+            color: $white !important;
+            text-transform: capitalize;
+            font-size: 1.3rem;
+        }
+
+        .nav-link.active {
+            background-color: $emerald-dark;
+        }
+    }
+
+}
+
+.subject-nav {
+    
+    .nav-link.active{
+        font-weight: 600;
+    }
+        
+    
+}

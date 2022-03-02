@@ -1,0 +1,20 @@
+@use "../custom" as *;
+@use "mixins" as *;
+
+.bg-gradient {
+    @include gradient;
+}
+
+.margin-r-1 {
+    margin-right: 1rem;
+}
+
+.div-link{
+    text-decoration: none;
+    color: inherit;
+}
+
+.abs-center{
+    @include absolute-center;
+}
+

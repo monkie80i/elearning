@@ -1,0 +1,34 @@
+@use "../custom" as *;
+@use "mixins" as *;
+
+
+.btn-primary{
+    @include my-btn-mixin($primary);
+}
+
+.btn-secondary{
+    @include my-btn-mixin($secondary);
+}
+
+.btn-byzantium {
+    @include my-btn-mixin($byzantium);
+}
+
+.btn-danger {
+    @include my-btn-mixin($red);
+}
+
+
+.btn {
+    &-big{
+        padding: .5rem 5rem;
+        font-size: 1.3rem;
+    }
+
+    &-medium {
+        padding: .5rem 4rem;
+        font-size: 1.2rem;
+    }
+
+}
+

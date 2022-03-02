@@ -1,0 +1,76 @@
+//font-family: 'Jost', sans-serif;
+//font-family: 'Roboto', sans-serif;
+@use "../custom" as *;
+.body {
+    font-family: 'Roboto', sans-serif;
+}
+
+.my-para {
+    
+    &-1{
+        font-size: 1rem;
+    }
+
+    &-2{
+        font-size: .9rem;
+    }
+    &-3{
+        font-size: .8rem;
+    }
+}
+
+.display{
+    &-1{
+        font-size: 8rem;
+        
+    }
+    &-2{
+        font-size: 7rem;
+    }
+    &-3{
+        font-size: 6rem;
+
+        @include media-breakpoint-down(md){
+            font-size: 4rem;
+        }
+    }
+    &-4{
+        font-size: 5rem;
+
+        @include media-breakpoint-down(md){
+            font-size: 3rem;
+        }
+    }
+    &-5{
+        font-size: 4rem;
+        @include media-breakpoint-down(md){
+            font-size: 3.3rem;
+        }
+    }
+    &-6{
+        font-size: 3rem;
+
+        @include media-breakpoint-down(md){
+            font-size: 2.5rem;
+        }
+    }
+}
+
+.heading-line::before {
+    content: "";
+    width: 10rem;
+    height: 0.1rem;
+    display: block;
+    margin: 0 auto;
+    background-color: $primary;
+}
+.heading-line::after {
+    content: "";
+    width: 2rem;
+    padding-top: 0.5rem;
+    height: 0.2rem;
+    display: block;
+    margin: 0 auto;
+    margin-bottom: 1rem;
+    background-color: $primary;
+}
