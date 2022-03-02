@@ -23,5 +23,11 @@
     <script type="text/javascript" src="{% static 'slick-1.8.1/slick/slick.min.js' %}"></script>
     {% block scripts %}
     {% endblock %}
+    <script>
+        $(document).ready(function() {
+            {% block domready %}
+            {% endblock %}
+        });
+    </script>
 </body>
 </html>
