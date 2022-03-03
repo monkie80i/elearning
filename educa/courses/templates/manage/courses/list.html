@@ -1,33 +1,76 @@
-{% extends "base.html" %}
+{% extends 'accounts/home.html'%}
 
 {% block title %}Course List{% endblock %}
-{% block content %}
-<h1>THese are yous courses</h1>
-{% if subejct %}
-    <p>selected subject{{subject}}</p>
-{%endif%}
-<a href="{% url 'logout' %}">Logout</a>
 
-<div id="course-list">
-    {% for course in object_lsit %}
-        <div>
-            <h2>{{course.title}}</h2>
-            <p>{{course.overview}}</p>
-            <a href="{%url 'manage_course_detail' course.id %}">View</a>
-            <a href="{% url 'course_update' course.id %}">Edit</a>
-            <a href="{% url 'course_delete' course.id %}">delete</a>
+{% block sidenav_links%}
+<li class="nav-item">
+    <a class="nav-link "href="{%url 'course_list' %}">All Courses</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link active" href="{%url 'manage_course_list' 'all' %}">My Courses</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link " href="{%url 'course_create' %}">Add Course</a>
+  </li>
+{%endblock%}
+
+{%block main_content %}
+<div class="container teacher-home-main" id="content">
+    <h4 class="display-4">Your Courses</h4>
+    <div id="your-courses" class="container teacher-home-your-courses">
+        <nav class="nav subject-nav mb-4 mt-4">
+            <a class="nav-link {%if not subejct %}active{%endif%}" aria-current="page" href="{%url 'manage_course_list' 'all' %}">All</a>
+            {% if subjects %}
+                {% for sub in all_subjects %}
+                <a class="nav-link {%if sub == subejct %}active{%endif%}" href="{% url 'manage_course_list' sub %}">{{sub}}</a>
+                {%endfor%}
+            {%endif%}
+        </nav>
+        <div class="course-list">
+            {%for course in courses %}
+            <div class="course-item"  id="course-{{course.id}}" >
+                <div class="d-flex justify-content-between">
+                    <div >
+                        <h1 style="text-decoration: none;">{{course.title}}</h1>
+                        <p class="lead">{{course.modules.count}} modules</p>
+                    </div>
+                    <div class="actions" >
+                      <a href="{%url 'course_update' course.id %}" >
+                        <i class="fa-solid fa-pencil text-primary"></i>
+                      </a>
+                      <a href="{%url 'course_delete' course.id %}">
+                          <i class="fa-solid fa-trash "></i>
+                      </a>
+                    </div>
+                </div>
+                <p>{{course.overview}}</p>
+                <a href="{%url 'manage_course_detail' course.id %}" type="button" class="btn btn-primary-solid ">View</a> 
+            </div>
+            {%empty%}
+            <div class="alert alert-info" role="alert">
+                NO Courses yet
+            </div>
+            {%endfor%}
         </div>
-    {% empty %}
-        <p>You have not creatd any courses</p>
-    {% endfor %}
+
+        <nav class="mt-5">
+            <ul class="pagination justify-content-center">
+              <li class="page-item">
+                <a class="page-link" href="#" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+              <li class="page-item"><a class="page-link" href="#">1</a></li>
+              <li class="page-item"><a class="page-link" href="#">2</a></li>
+              <li class="page-item"><a class="page-link" href="#">3</a></li>
+              <li class="page-item">
+                <a class="page-link" href="#" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+    </div>              
 </div>
-{% if subjects %}
-    <div>
-        <span>Filter by</span>
-        {% for sub in all_subjects %}
-        <a href="{% url 'manage_course_list' sub %}">{{sub}}</a>
-        {%endfor%}
-    </div>
-{%endif%}
-<a href="{% url 'course_create' %}">Create Course</a>
-{% endblock %}
+{%endblock%}
+

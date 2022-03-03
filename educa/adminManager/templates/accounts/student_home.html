@@ -1,5 +1,7 @@
 {% extends 'accounts/home.html'%}
 
+{% block title %}Home{% endblock %}
+
 {% block sidenav_links%}
 <li class="nav-item">
     <a class="nav-link active"href="{%url 'course_list' %}">All Courses</a>
@@ -13,27 +15,30 @@
 {%endblock%}
 
 {%block main_content %}
-<h3 class="display-3">Hi {{user.username}}!</h3>
-<div id="your-courses" class="container teacher-home-your-courses">
-    <div class="d-flex justify-content-between">
-        <h6 class="display-6">Your Courses</h6>
-        <a href="{% url 'student_course_list' %}" type="button"style="max-height: 2.5rem;" class="btn btn-primary-solid">View all</a>
-    </div>
-    <div class="course-list">
-    {%for course in courses %}
-        <div id="course-{{course.id}}" class="course-item">
-            <h1 style="text-decoration: none;">{{course.title}}</h1>
-            <p class="lead">{{course.modules.count}} modules</p>
-            <p>{{course.overview}}</p>
-            <a href="{%url 'student_course_detail' course.id %}" type="button" class="btn btn-primary-solid ">View</a>
-            <a href="#" type="button" class="btn btn-danger-solid ">Un Enroll</a>
+<div class="container teacher-home-main" id="content">
+    <h3 class="display-3">Hi {{user.username}}!</h3>
+    <div id="your-courses" class="container teacher-home-your-courses">
+        <div class="d-flex justify-content-between">
+            <h6 class="display-6">Your Courses</h6>
+            <a href="{% url 'student_course_list' %}" type="button"style="max-height: 2.5rem;" class="btn btn-primary-solid">View all</a>
         </div>
-    {%empty%}
-        <div class="alert alert-info" role="alert">
-            NO Courses yet
+        <div class="course-list">
+        {%for course in courses %}
+            <div id="course-{{course.id}}" class="course-item">
+                <h1 style="text-decoration: none;">{{course.title}}</h1>
+                <p class="lead">{{course.modules.count}} modules</p>
+                <p>{{course.overview}}</p>
+                <a href="{%url 'student_course_detail' course.id %}" type="button" class="btn btn-primary-solid ">View</a>
+                <a href="#" type="button" class="btn btn-danger-solid ">Un Enroll</a>
+            </div>
+        {%empty%}
+            <div class="alert alert-info" role="alert">
+                NO Courses yet
+            </div>
+        {%endfor%}
         </div>
-    {%endfor%}
-    </div>
-</div> 
+    </div>          
+</div>
+
 {%endblock%}
 

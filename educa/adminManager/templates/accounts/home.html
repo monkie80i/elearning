@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Home{% endblock %}
+
 
 {% block nav_items %}
     <li class="nav-item">
@@ -29,16 +29,15 @@
         </div>
         <!--Content-->
         <div class="col">
-            <div class="container teacher-home-main" id="content">
-                {% if error %}
-                    <div class="alert alert-warning" role="alert">
-                        {{error}}
-                    </div>
-                {%endif%}
+            {% if error %}
+                <div class="alert alert-warning" role="alert">
+                    {{error}}
+                </div>
+            {%endif%}
 
-                {%block main_content %}
-                {%endblock%}
-            </div>
+            {%block main_content %}
+            {%endblock%}
+            
         </div>
       </div>
     </div>
