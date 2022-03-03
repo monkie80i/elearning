@@ -28,12 +28,14 @@ class UserHomeView(View,LoginRequiredMixin):
                 'courses':self.courses,
                 'user':self.user
             }
+            self.template_name = 'accounts/teacher_home.html'
         if self.user.is_student:
             courses = Course.objects.filter(students=self.user)[:10]
             self.context_object = {
                 'courses':courses,
                 'user':self.user
             }
+            self.template_name = 'accounts/student_home.html'
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, *args, **kwargs):

@@ -1,0 +1,47 @@
+{% extends 'accounts/home.html'%}
+
+{% block sidenav_links%}
+<li class="nav-item">
+    <a class="nav-link active"href="{%url 'course_list' %}">All Courses</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{%url 'manage_course_list' 'all' %}">My Courses</a>
+  </li>
+{%endblock%}
+
+{%block main_content %}
+<h3 class="display-3">Hi {{user.username}}!</h3>
+<div id="your-courses" class="container teacher-home-your-courses">
+    <div class="d-flex justify-content-between">
+        <h6 class="display-6">Your Courses</h6>
+        <a href="{% url 'manage_course_list' 'all' %}" type="button"style="max-height: 2.5rem;" class="btn btn-primary-solid">View all</a>
+    </div>
+    <div class="course-list">
+    {%for course in courses %}
+        <div class="course-item"  id="course-{{course.id}}" >
+            <div class="d-flex justify-content-between">
+                <div >
+                    <h1 style="text-decoration: none;">{{course.title}}</h1>
+                    <p class="lead">{{course.modules.count}} modules</p>
+                </div>
+                <div class="actions" >
+                  <a href="{%url 'course_update' course.id %}" >
+                    <i class="fa-solid fa-pencil text-primary"></i>
+                  </a>
+                  <a href="{%url 'course_delete' course.id %}">
+                      <i class="fa-solid fa-trash "></i>
+                  </a>
+                </div>
+            </div>
+            <p>{{course.overview}}</p>
+            <a href="{%url 'manage_course_detail' course.id %}" type="button" class="btn btn-primary-solid ">View</a> 
+    </div>
+    {%empty%}
+        <div class="alert alert-info" role="alert">
+            NO Courses yet
+        </div>
+    {%endfor%}
+    </div>
+</div> 
+{%endblock%}
+

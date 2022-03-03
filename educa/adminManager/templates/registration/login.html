@@ -2,25 +2,59 @@
 
 {% block title %}Log-in{% endblock %}
 
-{% block content %}
-<h1>Log-in</h1>
-<div class="module">
-    {% if form.errors %}
-    <p>Your username and password didn't match. Please try again.</p>
-    {% else %}
-    <p>Please, use the following form to log-in:</p>
-    {% endif %}
-    <div class="login-form">
-    <form action="{% url 'login' %}" method="post">
-    {{ form.as_p }}
-    {% csrf_token %}
-    <input type="hidden" name="next" value="{% url 'user_home' %}" />
-    <p><input type="submit" value="Log-in"></p>
-    </form>
-    <p>NOt a memeber?</p>
-    <a href="{% url 'user_registration' 'teacher' %}">Register as Teacher</a>
-    <a href="{% url 'user_registration' 'student' %}">Register as Student</a>
+{% block nav_items %}
+    {% if request.user.is_authenticated %}
+        <li class="nav-item">
+            <a class="nav-link" href="{%url 'logout'%}">logout</a>
+        </li>
+    {%else%}
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'user_registration' 'teacher' %}">register</a>
+        </li>
+    {%endif%}
+{% endblock %}
 
-</div>
-</div>
+{% block content %}
+<section>
+    <div class="position-relative min-vh-100">
+        <div class=" register-form-container border border-primary abs-center rounded " >
+            {% if request.user.is_authenticated %}
+            <div class="alert alert-danger" role="alert">
+                You dont have permission to this page. Kindly <a href="{%url 'logout'%}">logout</a> to togin to another account.
+            </div>
+            {%else%}
+            <form class="register-form-body" action="" method="post">
+                <h3 class="text-center mb-3">Login</h3>
+                {% if form.errors %}
+                <div class="alert alert-danger" role="alert">
+                    Your username and password didn't match. Please try again.
+                </div>
+                {% endif %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ form.password.id_for_label }} " class="form-label">Password</label>
+                        <input class="form-control border-primary" id="{{ field.id_for_label }}" maxlength="{{ field.max_length }}" name="{{ field.html_name }}" value="{% if field.value %}{{ field.value }}{% endif%}" type="{{field.widget_type}}" /> 
+                        <div class="form-help">{{ field.errors }}</div>                      
+                    </div>
+                {% endfor %}
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}" />
+                <button type="submit" value="save" class="btn btn-primary-solid w-100">Submit</button>
+            </form>
+            <hr>
+            <h4 class="text-center mb-3 mt-3">Not a Memeber yet?</h4>
+            <a class="btn btn-byzantium-solid w-100" href="{% url 'user_registration' 'student' %}">Student Registration</a>
+            <h5 class="text-center mb-2 mt-2">OR</h5>
+            <a class="btn btn-byzantium-solid w-100" href="{% url 'user_registration' 'teacher' %}">Teacher Registration</a>
+            {%endif%}
+            
+        </div>
+            
+    </div>
+</section>
+{% endblock %}
+
+{% block domready %}
+
+   
 {% endblock %}

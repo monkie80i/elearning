@@ -1,46 +1,48 @@
 {% extends "base.html" %}
 
-{% block title %}Teacher Home{% endblock %}
-{% block content %}
-<h1>Welcome {{user.username}}</h1>
-{% if error %}
-    <p>{{error}}</p>
-{%endif%}
-<a href="{% url 'logout' %}">Logout</a>
-<div id="course-list">
-    
-</div>
-{% if user.is_teacher %}
+{% block title %}Home{% endblock %}
 
-    <div>
-        <h2>My Courses</h2>
-        {%for course in courses %}
-            <div id="course-{{course.id}}">
-                <h3>{{course.title}}</h3>
-                <p>{{course.overview}}</p>
-                <!--add enrolled annotate-->
-                <a href="{%url 'manage_course_detail' course.id %}">View</a>
-            </div>
-        {%empty%}
-            <p>No courses yet</p>
-        {%endfor%}
-        <a href="{% url 'course_create' %}">Add a course</a>
-        <a href="{% url 'manage_course_list' 'all' %}">View all</a>
-    </div>
-{%endif%}
-{%if request.user.is_student%}
-<div>
-    <h2>My Enrolled courses</h2>
-    {%for course in courses %}
-        <div id="course-{{course.id}}">
-            <h3>{{course.title}}</h3>
-            <!--add enrolled annotate-->
-            <a href="{%url 'student_course_detail' course.id %}">View</a>
+{% block nav_items %}
+    <li class="nav-item">
+        <a class="nav-link active" href="#">Home</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{%url 'logout' %}">logout</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link disabled">account</a>
+    </li>
+{%endblock%}
+
+{% block content %}
+<section id="main">
+    <div class="container-fluid">
+      <div class="row">
+          <!--Side nav-->
+        <div class="col-md-2 bg-primary p-0">
+          <ul class=" nav sidenav flex-column mt-3 mb-3" id="sideNav">
+            
+            {% block sidenav_links%}
+            {%endblock%}
+            
+          </ul>
         </div>
-    {%empty%}
-        <p>Not enrolled in any  courses yet</p>
-    {%endfor%}
-    <a href="{% url 'student_course_list' %}">View all</a>
-</div>
-{%endif%}
+        <!--Content-->
+        <div class="col">
+            <div class="container teacher-home-main" id="content">
+                {% if error %}
+                    <div class="alert alert-warning" role="alert">
+                        {{error}}
+                    </div>
+                {%endif%}
+
+                {%block main_content %}
+                {%endblock%}
+            </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
 {% endblock %}
+
