@@ -1,13 +1,23 @@
-{% extends "base.html" %}
-{% block title %}Delete Content{% endblock %}
-{% block content %}
-<h1>Delete Content "{{ object.item.title }}"</h1>
-<div class="module">
-<form action="" method="post">
-{% csrf_token %}
-<p>Are you sure you want to delete "{{ object.item.title }}"?</p>
-<input type="submit" value="Confirm">
-<!--input type="hidden" name="next" value="{{next}}"-->
-</form>
-</div>
+{% extends "manage/delete_base.html" %}
+
+{% block title %}
+    Delete Content {{object.item.title}}
 {% endblock %}
+
+{% block side_nav%}
+  <li class="nav-item">
+    <a class="nav-link "href="{%url 'course_list' %}">All Courses</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{%url 'manage_course_list' 'all' %}">My Courses</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{%url 'module_content_list' object.module.id %}">Back to Module</a>
+  </li>
+{%endblock%}
+
+{%block form_top_content %}
+<h1>Delete content "{{ object.item.title }}" ?</h1>
+{% endblock %}
+
+{% block cancel_href %}{%url 'module_content_list' object.module.id %}{%endblock%}

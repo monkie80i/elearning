@@ -2,7 +2,7 @@ from importlib.resources import contents
 from re import sub
 from turtle import title
 from urllib import response
-from django.test import RequestFactory, TestCase,Client
+from django.test import RequestFactory, TestCase,Client,LiveServerTestCase
 from .models import Subject, User
 from django.urls import reverse,reverse_lazy
 from django.conf import settings
@@ -249,22 +249,27 @@ class ContentCreateUpdateTestCase(TestCase):
         #self.sclent = Client()
         #self.sclent.login(username=self.username2,password=self.password2)
 
-    def test_owner_creation_updation_dlete(self):
+    def test_owner_creation_updation_delete(self):
+        
+        
         response = self.tclent.get(reverse_lazy('create_content',args=[self.mo1.id,'text']))
+        
         self.assertEqual(response.status_code,200)
         data =  {
             'title':"New Old Content",
             'content':"This is Old content"
         }
+        print(Content.objects.all(),Text.objects.all())
         response = self.tclent.post(reverse_lazy('create_content',args=[self.mo1.id,'text']),data=data)
-        self.assertEqual(response.status_code,200)
-        
+        self.assertEqual(response.status_code,302)
+
+        print('gensis',Content.objects.all(),Text.objects.all())
+        #print(response.url)
         text = Content.objects.filter(module=self.mo1).first()
         self.assertEqual(text.item.owner,self.t1)
         item=text.item
         #print(item.owner,item.title,item.content)
         self.assertEqual(text.item.title,data['title'])
-
         response = self.tclent.get(reverse_lazy('update_content',args=[self.mo1.id,'text',item.id]))
         self.assertEqual(response.status_code,200)
 
@@ -273,21 +278,22 @@ class ContentCreateUpdateTestCase(TestCase):
             'content':"This is new content"
         }
         response = self.tclent.post(reverse_lazy('update_content',args=[self.mo1.id,'text',item.id]),data=new_data)
-        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.status_code,302)
 
         content = Content.objects.filter(module=self.mo1).first()
         nitem = content.item
         self.assertEqual(nitem.owner,self.t1)
         self.assertEqual(nitem.title,new_data['title'])
-        
+        print('after update',Content.objects.all(),Text.objects.all())
         #delteion
         #print('cid:',content.id)
         response = self.tclent.get(reverse_lazy('delete_content',args=[content.id]))
         self.assertEqual(response.status_code,200)
-        print(response.content)
+        #print(response.content)
         response = self.tclent.post(reverse_lazy('delete_content',args=[content.id]))
-        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.status_code,302)
         self.assertEqual(Content.objects.filter(id=content.id).exists(),False)
+        print('After Delete',Content.objects.all(),Text.objects.all())
         
     def test_non_owner_creation_updation(self):
         pass

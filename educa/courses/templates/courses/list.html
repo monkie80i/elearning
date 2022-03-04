@@ -1,36 +1,70 @@
-{% extends "base.html" %}
+{% extends 'courses/public_base.html'%}
 
 {% block title %}Course List{% endblock %}
-{% block content %}
-<h1>Courses</h1>
-{% if subejct %}
-    <p>selected subject{{subject}}</p>
-{%endif%}
-{%if request.user.is_authenticated %}
-<a href="{% url 'logout' %}">Logout</a>
-<a href="{% url 'user_home' %}">Home</a>
-{%else%}
-<a href="{% url 'login' %}">Login</a>
-{%endif%}
-<div>
-    <span>Filter by</span>
-    <a href="{% url 'course_list' %}">All</a>
-    {% for sub in subjects %}
-    <a href="{% url 'course_list_subject' sub.slug %}">{{sub}}</a>
-    {%endfor%}
-</div>
-<div id="course-list">
-    {% for course in courses %}
-        <div>
-            <h2>{{course.title}}</h2>
-            <p>{{course.overview}}</p>
-            <p>Intructor:{{course.user.username}}</p>
-            <!--ratings-->
-            <a href="{%url 'public_course_detail' course.id %}">View</a>
+
+{% block sidenav_links%}
+    <li class="nav-item">
+        <a class="nav-link active"href="{%url 'course_list' %}">All Courses</a>
+    </li>
+  {%if request.user.is_authenticated %}
+    {%if request.user.is_teacher%}
+        <li class="nav-item">
+            <a class="nav-link " href="{%url 'manage_course_list' 'all' %}">My Courses</a>
+        </li>
+    {%elif request.user.is_student%}
+        <li class="nav-item">
+            <a class="nav-link" href="{%url 'student_course_list' %}">Enrolled Courses</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Saved Courses</a>
+        </li>
+    {%endif%}
+  {%endif%}
+{%endblock%}
+
+{%block main_content %}
+<div class="container teacher-home-main" id="content">
+    <h4 class="display-4">All Courses</h4>
+    <div id="your-courses" class="container teacher-home-your-courses">
+        <nav class="nav subject-nav mb-4 mt-4">
+            <a class="nav-link {%if not subject %}active{%endif%}" aria-current="page" href="{%url 'manage_course_list' 'all' %}">All</a>
+                {% for sub in all_subjects %}
+                <a class="nav-link {%if sub == subject %}active{%endif%}" href="{% url 'course_list_subject' sub.slug %}">{{sub}}</a>
+                {%endfor%}
+        </nav>
+        <div class="course-list">
+            {%for course in courses %}
+            <div class="course-item" id="course-{{course.id}}">
+                <h1 style="text-decoration: none;">{{course.title}}</h1>
+                <p class="lead m-0 p0"><b>Instructor: </b>{{user.username}}</p>
+                <p class="lead ">{{course.modules.count}} modules</p>
+                <p>{{course.overview}}</p>
+                <a href="{%url 'public_course_detail' course.id %}" type="button" class="btn btn-primary-solid ">View</a>
+            </div>
+            {%empty%}
+            <div class="alert alert-info" role="alert">
+                NO Courses yet
+            </div>
+            {%endfor%}
         </div>
-        
-    {% empty %}
-        <p>You have not creatd any courses</p>
-    {% endfor %}
+
+        <nav class="mt-5">
+            <ul class="pagination justify-content-center">
+              <li class="page-item">
+                <a class="page-link" href="#" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+              <li class="page-item"><a class="page-link" href="#">1</a></li>
+              <li class="page-item"><a class="page-link" href="#">2</a></li>
+              <li class="page-item"><a class="page-link" href="#">3</a></li>
+              <li class="page-item">
+                <a class="page-link" href="#" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+    </div>              
 </div>
-{% endblock %}
+{%endblock%}

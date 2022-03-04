@@ -4,10 +4,13 @@
 
 {% block sidenav_links%}
 <li class="nav-item">
-    <a class="nav-link active"href="{%url 'course_list' %}">All Courses</a>
+    <a class="nav-link"href="{%url 'course_list' %}">All Courses</a>
   </li>
   <li class="nav-item">
     <a class="nav-link" href="{%url 'manage_course_list' 'all' %}">My Courses</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{%url 'course_create'  %}">Create Course</a>
   </li>
 {%endblock%}
 

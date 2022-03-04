@@ -7,6 +7,7 @@
 <li class="nav-item">
     <a class="nav-link" href="{%url 'user_home'%}">Home</a>
   </li>
+
   <li class="nav-item">
     <a class="nav-link" href="{%url 'course_list'%}">courses</a>
   </li>
@@ -87,7 +88,7 @@
                                             <h5>{{item.title}}</h5>
                                         </div>
                                         <div class="actions" >
-                                            <a href="{%url 'update_content' course.id module_1.id item|model_name item.id %}" >
+                                            <a href="{%url 'update_content'  module_1.id item|model_name item.id %}" >
                                                 <i class="fa-solid fa-pencil text-primary"></i>
                                             </a>
                                             <a href="{%url 'delete_content' content.id %}">

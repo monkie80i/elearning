@@ -1,19 +1,36 @@
-{% extends "base.html" %}
+{% extends "manage/form_base.html" %}
 
-{% block title %}Content Form{% endblock %}
-{% block content %}
-<a href="{% url 'logout' %}">Logout</a>
-
-<a href="#">Create Course</a>
-{%if object %}
-    <h1>Update Content</h1>
-{%else%}
-    <h1>Add New Content</h1>
-{%endif%}
-<h2>Contetn Info</h2>
-<form action="" method="post" enctype="multipart/form-data">
-    {{ form.as_p }}
-    {% csrf_token %}
-    <p><input type="submit" value="save"></p>
-</form>
+{% block title %}
+    {%if object %}
+    Edit "{{object.title}}"  
+    {% else %}
+    Create Content
+    {% endif %}
 {% endblock %}
+
+{% block side_nav%}
+  <li class="nav-item">
+    <a class="nav-link "href="{%url 'course_list' %}">All Courses</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{%url 'manage_course_list' 'all' %}">My Courses</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{%url 'module_content_list' module.id %}">Back to Module</a>
+  </li>
+{%endblock%}
+
+{%block form_top_content %}
+  {%if object %}
+      <h5 class="display-5">Edit {{object.title}}</h5>   
+  {% else %}
+      <h5 class="display-5">Create Content</h5>   
+  {% endif %}
+{% endblock %}
+
+{% block cancel_href %}{%url 'module_content_list' module.id %}{%endblock%}
+
+
+
+
+

@@ -1,18 +1,30 @@
-{% extends "base.html" %}
+{% extends "manage/form_base.html" %}
 
-{% block title %}{{title}}{% endblock %}
-{% block content %}
-<a href="{% url 'logout' %}">Logout</a>
-
-<a href="#">Create Course</a>
-{%if object %}
-    <h1>Update Course</h1>
-{%else%}
-    <h1>Create Course</h1>
-{%endif%}
-<form action="." method="post">
-    {{ form.as_p }}
-    {% csrf_token %}
-    <p><input type="submit" value="save"></p>
-</form>
+{% block title %}
+    {%if object %}
+    Edit "{{object.title}}"  
+    {% else %}
+    Create Course
+    {% endif %}
 {% endblock %}
+
+{% block side_nav%}
+  <li class="nav-item">
+    <a class="nav-link "href="{%url 'course_list' %}">All Courses</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{%url 'manage_course_list' 'all' %}">My Courses</a>
+  </li>
+{%endblock%}
+
+{%block form_top_content %}
+  {%if object %}
+      <h5 class="display-5">Edit {{object.title}}</h5>   
+  {% else %}
+      <h5 class="display-5">Create Course</h5>   
+  {% endif %}
+{% endblock %}
+
+
+{% block cancel_href %}{%url 'manage_course_list' 'all' %}{%endblock%}
+

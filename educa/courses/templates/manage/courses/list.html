@@ -19,15 +19,13 @@
     <h4 class="display-4">Your Courses</h4>
     <div id="your-courses" class="container teacher-home-your-courses">
         <nav class="nav subject-nav mb-4 mt-4">
-            <a class="nav-link {%if not subejct %}active{%endif%}" aria-current="page" href="{%url 'manage_course_list' 'all' %}">All</a>
-            {% if subjects %}
+            <a class="nav-link {%if not subject %}active{%endif%}" aria-current="page" href="{%url 'manage_course_list' 'all' %}">All</a>
                 {% for sub in all_subjects %}
-                <a class="nav-link {%if sub == subejct %}active{%endif%}" href="{% url 'manage_course_list' sub %}">{{sub}}</a>
+                <a class="nav-link {%if sub == subject %}active{%endif%}" href="{% url 'manage_course_list' sub %}">{{sub}}</a>
                 {%endfor%}
-            {%endif%}
         </nav>
         <div class="course-list">
-            {%for course in courses %}
+            {%for course in object_lsit %}
             <div class="course-item"  id="course-{{course.id}}" >
                 <div class="d-flex justify-content-between">
                     <div >

@@ -4,10 +4,10 @@
 
 {% block nav_items %}
     <li class="nav-item">
-        <a class="nav-link active" href="#">Home</a>
+        <a class="nav-link active" href="{%url 'user_home' %}">Home</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="#">courses</a>
+      <a class="nav-link" href="{%url 'course_list' %}">courses</a>
     </li>
     <li class="nav-item">
         <a class="nav-link" href="{%url 'logout' %}">logout</a>
@@ -15,6 +15,7 @@
     <li class="nav-item">
         <a class="nav-link disabled">account</a>
     </li>
+
 {%endblock%}
 
 {% block content %}
@@ -47,4 +48,3 @@
   </section>
 
 {% endblock %}
-

@@ -1,38 +1,85 @@
 {% extends "base.html" %}
 
-
-
 {% block title %}{{course.title}}{% endblock %}
+
+{% block nav_items %}
+    <li class="nav-item">
+        <a class="nav-link" href="{%url 'user_home' %}">Home</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{%url 'course_list' %}">courses</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{%url 'logout' %}">logout</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link disabled">account</a>
+    </li>
+
+{%endblock%}
+
 {% block content %}
+<section id="course-brief" class="shadow">
+    <div class="container jumboman">
+        <div class="d-flex justify-content-between module-content-course">
+            <div class="module-content-course-details">
+              <h4 class="display-4">{{course.title}}</h3>
+              <p class="my-para-1">{{course.overview}}</p>
 
-<a href="{% url 'logout' %}">Logout</a>
-{% with all_modules=course.modules.all %}
-<h1>{{course.title}}</h1>
-<div id="module-list">
-    {%for mod in all_modules %}
-    <div data-order="{{mod.order}}" id="{{mod.id}}">
-        <h3>{{mod.title}}</h3>
-        <a href="{%url 'student_course_detail_module' course.id mod.id %}">View</a>
+            </div>
+            <div class="module-content-course-button">
+              <a href="#" type="button"style="min-width: 8rem" class="btn btn-danger-solid">Un Enroll</a>
+            </div>
+        </div>
+        
+        
     </div>
-    {%empty%}
-    <p>No modules yet</p>
-    {%endfor%}
-</div>
-<div id="module" style="border: 1px solid black;">
-    <h2>{{module.title}}</h2>
-    <p>{{module.description}}</p>
-    <div id="content">
-        {%for content in module.contents.all %}
-            {% with item=content.item %}
-                <p>{{item.title}}</p>
-                {{item.render}}
-            {%endwith%}
-        {%empty%}
-            <p>No Content Yet</p>
-        {%endfor%}
+</section>
+<section id="main">
+    <div class="container-fluid">
+      <div class="row">
+          <!--Side nav-->
+        <div class="col-md-2 bg-primary p-0">
+          <ul class=" nav sidenav flex-column mt-3 mb-3" id="sideNav">
+            {% for mod in course.modules.all %}
+                <li class="nav-item" data-order="{{mod.order}}" id="{{mod.id}}">
+                    <a class="nav-link {%if module.id == mod.id %}active{%endif%}"href="{%url 'student_course_detail_module' course.id mod.id %}">{{mod.title}}</a>
+                </li>
+            {% endfor %}
+            
+            <li class="nav-item">
+                <a class="nav-link fw-bolder" href="#">Chat</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link fw-bolder" href="#">Feedback</a>
+            </li>
+            
+          </ul>
+        </div>
+        <!--Content-->
+        <div class="col">
+            <div class="container module-content-main" id="content" >
+                <h6 class="display-6 mb-3">{{module.title}}</h6>
+                <p class="my-para-1">{{module.description}}</p>
+
+                <ul class="list-group module-content-list">
+                    {%for content in module.contents.all %}
+                        {% with item=content.item %}
+                            <li class="list-group-item mt-2 border-0" >
+                                <div class="pt-2">
+                                    {{item.render}}
+                                </div>
+                            </li>
+                        {%endwith%}
+                    {%empty%}
+                        <div class="alert alert-info" role="alert">
+                            No Content Yet
+                        </div>
+                    {%endfor%}
+                </ul>
+            </div>
+        </div>
+      </div>
     </div>
-</div>
-{%endwith%}
-
-
+  </section>
 {% endblock %}

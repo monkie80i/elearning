@@ -46,10 +46,11 @@ class OwnerCourseMixin(OwnerMixin,SubjectQSMixin,LoginRequiredMixin,PermissionRe
 
 class ManageCourseView(OwnerCourseMixin,View):
     permission_required = 'courses.view_course'
-
+    all_subjects = Subject.objects.all()
     def get(self,request,subject=None):
         if subject not in (None,'all','All'):
             qs = self.qs.filter(subject__title=subject)
+
         else:   
             qs=self.qs
         return render(request,self.list_template_name,{'object_lsit':qs,'subject':subject,'all_subjects': self.all_subjects})
@@ -123,7 +124,7 @@ course_update_view = CourseUpdateView.as_view()
 
 class CourseDeleteView(OwnerCourseMixin,DeleteView):
     permission_required = 'courses.delete_course'
-    success_url = 'manage/course/list/all'
+    success_url = '/manage/course/list/all'
     template_name = 'manage/courses/delete.html'
     #permission_required = 'courses.delete_course'
 
@@ -173,9 +174,18 @@ class ModuleCreateUpdateView(CourseModuleMixin,View):
         try: 
             if id:
                 form = self.form_class(instance=self.module)
+                context = {
+                    'object':self.module,
+                    'form':form,
+                    'course_id':course_id
+                }
             else:
                 form =  self.form_class()
-            return render(request,self.edit_template_name,{'form':form})
+                context = {
+                    'form':form,
+                    'course_id':course_id
+                }
+            return render(request,self.edit_template_name,context)
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
             print('e:',e)
@@ -197,10 +207,10 @@ class ModuleCreateUpdateView(CourseModuleMixin,View):
                     instance.course = self.course
                     instance.save()
                 else:
-                    form.save()
+                    instance = form.save()
                 if is_add_another:
                     return redirect('create_module',course_id)
-            return redirect('course_detail',course_id)
+            return redirect('module_content_list',instance.id)
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
             print('e:',e)
@@ -213,7 +223,7 @@ class ModuleDeleteView(CourseModuleMixin,DeleteView,PermissionRequiredMixin):
     permission_required = 'module.delete_module'
     #permission_required = 'courses.delete_course'
     def setup(self, request,course_id, *args, **kwargs):
-        self.success_url = reverse_lazy('course_detail',args=[course_id])
+        self.success_url = reverse_lazy('manage_course_detail',args=[course_id])
         return super().setup(request, *args, **kwargs)
 
 module_delete_view =ModuleDeleteView.as_view()
@@ -232,7 +242,7 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
         return None
     
     def get_form(self,model,*args,**kwargs):
-        Form =  modelform_factory(model=model,exclude=['order','owner','created','updated'])
+        Form =  modelform_factory(model=model,exclude=['order','owner','created','updated'])   
         return Form(*args,**kwargs)
 
     def dispatch(self, request,module_id,model_name,id=None, *args, **kwargs):
@@ -240,13 +250,14 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
         self.module =get_object_or_404(Module,id=module_id,course__user=request.user)# this will ensure only the owner can edit this modlue
         if id:
             self.obj = get_object_or_404(self.Model,id=id,owner = request.user)
-        return super().dispatch(request,module_id,model_name,id=None, *args, **kwargs)
+        return super().dispatch(request,module_id,model_name,id, *args, **kwargs)
 
     def get(self, request,module_id,model_name,id=None):
         form = self.get_form(self.Model,instance=self.obj)
         context_obj = {
             'form':form,
-            'object':self.obj
+            'object':self.obj,
+            'module':self.module
         }
         return render(request,self.template_name,context_obj)
 
@@ -257,6 +268,8 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
             data=request.POST,
             files=request.FILES
         )
+        print('id',id)
+
         #print('files',request.FILES)
         if form.is_valid():
             obj = form.save(commit=False)
@@ -272,7 +285,7 @@ content_create_update_view = ContentCreateUpdateView.as_view()
 
 class ContentDeleteView(View,LoginRequiredMixin):
     content_obj = None
-    template_name = 'manage/modules/delete.html'
+    template_name = 'manage/contents/delete.html'
     #permission_required = 'module.delete_module'
 
     def dispatch(self, request,content_id, *args, **kwargs):
@@ -283,7 +296,7 @@ class ContentDeleteView(View,LoginRequiredMixin):
         form = Form
         context_obj = {
             'form':form,
-            'object':self.content_obj
+            'object':self.content_obj,
         }
         return render(request,self.template_name,context_obj)
     
@@ -291,8 +304,8 @@ class ContentDeleteView(View,LoginRequiredMixin):
         module = self.content_obj.module
         self.content_obj.item.delete()
         self.content_obj.delete()
-        #return redirect('module_content_list',module.id)
-        return HttpResponse('Success')
+        return redirect('module_content_list',module.id)
+
 
         
 content_delete_view =ContentDeleteView.as_view()
@@ -320,7 +333,7 @@ class CourseListView(View):
             courses = courses.filter(subject=subject)
         context_obj = {
             'courses':courses,
-            'subjects':subjects,
+            'all_subjects':subjects,
             'subject':subject
         }
         return render(request,self.template_name,context_obj)
@@ -370,10 +383,10 @@ class StudentCourseDetailView(View,LoginRequiredMixin):
 student_course_detail_view = StudentCourseDetailView.as_view()
 
 class StudentCourseListView(View,LoginRequiredMixin):
-    template_name = 'students/course/detail.html'
+    template_name = 'students/course/list.html'
 
     def get(self,request):
         courses = Course.objects.filter(students__in=[request.user])
-        return render(request,self.template_name,{'course':courses})
+        return render(request,self.template_name,{'courses':courses})
 
 student_course_list_view = StudentCourseListView.as_view()

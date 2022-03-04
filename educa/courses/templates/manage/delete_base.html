@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+
+{% block nav_items %}
+<li class="nav-item">
+    <a class="nav-link" href="{%url 'user_home'%}">Home</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">courses</a>
+</li>
+  <li class="nav-item">
+    <a class="nav-link" href="{%url 'logout'%}">logout</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link disabled">account</a>
+  </li>
+{%endblock%}
+
+{% block content %}
+<section id="main">
+    <div class="container-fluid">
+      <div class="row">
+          <!--Side nav-->
+        <div class="col-md-2 bg-primary p-0">
+          <ul class=" nav sidenav flex-column mt-3 mb-3" id="sideNav">
+            
+            {% block side_nav%}
+            {%endblock%}
+            
+          </ul>
+        </div>
+        <!--Content-->
+        <div class="col">
+            <div class="container form-container" id="content">
+                {%block form_top_content %}
+                {% endblock %}
+                <form action="" method="post">
+                    {% csrf_token %}
+                    <p>Are you sure you want to delete "{{ object }}"?</p>
+                    <input class=" mb-3 btn btn-danger-solid" type="submit" value="Confirm">
+                    <a class="mb-3 btn btn-primary-solid" href="{% block cancel_href %}{%endblock%}">Cancel</a>
+                </form>
+            </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+{% endblock %}

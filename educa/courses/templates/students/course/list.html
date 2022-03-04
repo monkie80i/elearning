@@ -1,25 +1,100 @@
 {% extends "base.html" %}
 
-{% block title%}My Courses{%endblock%}
+{% block title %}Enrolled Courses{% endblock %}
+
+{% block nav_items %}
+    <li class="nav-item">
+        <a class="nav-link active" href="{%url 'user_home' %}">Home</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{%url 'course_list' %}">courses</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{%url 'logout' %}">logout</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link disabled">account</a>
+    </li>
+
+{%endblock%}
 
 {% block content %}
-{%if request.user.is_authenticated %}
-<a href="{% url 'logout' %}">Logout</a>
-<a href="{% url 'user_home' %}">Home</a>
-{%else%}
-<a href="{% url 'login' %}">Login</a>
-{%endif%}
-<h1>My Courses</h1>
-<div id="courses">
-    {% for course in courses %}
-    <div>
-        <h3>{{course.title}}</h3>
-        <p>{{course.overview}}</p>
-        <a href="{% url 'student_course_detail' %}">Access Content</a>
+<section id="main">
+    <div class="container-fluid">
+      <div class="row">
+          <!--Side nav-->
+        <div class="col-md-2 bg-primary p-0">
+          <ul class=" nav sidenav flex-column mt-3 mb-3" id="sideNav">
+            <li class="nav-item">
+                <a class="nav-link active"href="{%url 'course_list' %}">All Courses</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{%url 'student_course_list' %}">Enrolled Courses</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Saved Courses</a>
+            </li>
+            
+          </ul>
+        </div>
+        <!--Content-->
+        <div class="col">
+            {% if error %}
+                <div class="alert alert-warning" role="alert">
+                    {{error}}
+                </div>
+            {%endif%}
+
+            <div class="container teacher-home-main" id="content">
+                <h4 class="display-4">Enrolled Courses</h4>
+                <div id="your-courses" class="container teacher-home-your-courses">
+                    <!--nav class="nav subject-nav mb-4 mt-4">
+                        <a class="nav-link {%if not subject %}active{%endif%}" aria-current="page" href="{%url 'manage_course_list' 'all' %}">All</a>
+                            {% for sub in all_subjects %}
+                            <a class="nav-link {%if sub == subject %}active{%endif%}" href="{% url 'course_list_subject' sub.slug %}">{{sub}}</a>
+                            {%endfor%}
+                    </nav-->
+                    <div class="course-list">
+                        {%for course in courses %}
+                        <div class="course-item" id="course-{{course.id}}">
+                            <h1 style="text-decoration: none;">{{course.title}}</h1>
+                            <p class="lead m-0 p0"><b>Instructor: </b>{{user.username}}</p>
+                            <p class="lead ">{{course.modules.count}} modules</p>
+                            <p>{{course.overview}}</p>
+                            <a href="{%url 'student_course_detail' course.id %}" type="button" class="btn btn-primary-solid ">View</a>
+                            <a href="#" type="button" class="btn btn-danger-solid ">Un Enroll</a>
+                        </div>
+                        {%empty%}
+                        <div class="alert alert-info" role="alert">
+                            <p>You have not enrolled in a course</p>
+                            <a href="{%url 'course_list' %} " class="btn btn-primary-solid">Browse courses</a>
+                        </div>
+                        {%endfor%}
+                    </div>
+            
+                    <nav class="mt-5">
+                        <ul class="pagination justify-content-center">
+                          <li class="page-item">
+                            <a class="page-link" href="#" aria-label="Previous">
+                              <span aria-hidden="true">&laquo;</span>
+                            </a>
+                          </li>
+                          <li class="page-item"><a class="page-link" href="#">1</a></li>
+                          <li class="page-item"><a class="page-link" href="#">2</a></li>
+                          <li class="page-item"><a class="page-link" href="#">3</a></li>
+                          <li class="page-item">
+                            <a class="page-link" href="#" aria-label="Next">
+                              <span aria-hidden="true">&raquo;</span>
+                            </a>
+                          </li>
+                        </ul>
+                      </nav>
+                </div>              
+            </div>
+            
+        </div>
+      </div>
     </div>
-    {%empty%}
-    <p>You have not enrolled in a course</p>
-    <a href="{%url 'course_list' %">Browse courses</a>
-    {%endfor%}
-</div>
-{%endblock%}
+  </section>
+
+{% endblock %}

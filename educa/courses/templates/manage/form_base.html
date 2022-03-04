@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+
+{% block nav_items %}
+<li class="nav-item">
+    <a class="nav-link" href="{%url 'user_home'%}">Home</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">courses</a>
+</li>
+  <li class="nav-item">
+    <a class="nav-link" href="{%url 'logout'%}">logout</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link disabled">account</a>
+  </li>
+{%endblock%}
+
+{% block content %}
+<section id="main">
+    <div class="container-fluid">
+      <div class="row">
+          <!--Side nav-->
+        <div class="col-md-2 bg-primary p-0">
+          <ul class=" nav sidenav flex-column mt-3 mb-3" id="sideNav">
+            
+            {% block side_nav%}
+            {%endblock%}
+            
+          </ul>
+        </div>
+        <!--Content-->
+        <div class="col">
+            <div class="container form-container" id="content">
+                {%block form_top_content %}
+                {% endblock %}
+                <form id="base_form" class="col-lg-6" action="" method="post" enctype="multipart/form-data">
+                  {% for field in form %}
+                      <div class="mb-3">
+                          <label for="{{ field.id_for_label }} " class="form-label">{{field.label}}</label>
+                          {{field}} 
+                          <div class="form-help">{{ field.errors }}</div>                      
+                      </div>
+                  {% endfor %}
+                  {% csrf_token %}
+                  <div class="">
+                      <input type="submit" class="mb-3 btn btn-primary-solid fs-5" value='save'></input>
+                      <input type="submit" name="add" value="Save and add another" class="mb-3 btn btn-primary-solid fs-5"></input>
+                      <a href="{% block cancel_href %}{%endblock%}" class="mb-3 btn btn-danger-solid fs-5">Cancel</a>
+                  </div>
+                </form> 
+            </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+{% endblock %}
+
+
+{% block domready %}
+  $('#base_form').children().filter('.mb-3').each(function(index){
+    console.log($(this))
+    let input = $(this).children().filter('input').first();
+    
+    if(input){
+      if(input.attr('type')=='checkbox'){
+        input.addClass('btn-check');
+        input.attr("autocomplete","off");
+        input.next().addClass("btn btn-primary-solid")
+      }
+      else{
+        input.addClass('form-control border-primary');
+      }
+      
+    }
+    let ta = $(this).children().filter('textarea').first();
+    console.log($(this).children().filter('textarea').first())
+    if(ta){
+      ta.addClass('form-control border-primary')
+    }
+
+    let select = $(this).children().filter('select').first();
+    if(select){
+      select.addClass('form-control border-primary')
+    }
+  });
+
+
+{% endblock %}

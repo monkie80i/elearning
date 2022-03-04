@@ -1,47 +1,126 @@
 {% extends "base.html" %}
+
 {% load course %}
 {% block title %}Manage Module Content List{% endblock %}
+
+{% block nav_items %}
+<li class="nav-item">
+    <a class="nav-link" href="{%url 'user_home'%}">Home</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">courses</a>
+</li>
+  <li class="nav-item">
+    <a class="nav-link" href="{%url 'course_list'%}">courses</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="{%url 'logout'%}">logout</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link disabled">account</a>
+  </li>
+{%endblock%}
+
 {% block content %}
-<a href="{% url 'logout' %}">Logout</a>
 {% with course=module.course all_modules=module.course.modules.all %}
-<h1>{{course.title}}</h1>
-<div id="module-list">
-    {%for mod in all_modules %}
-    <div data-order="{{mod.order}}" id="{{mod.id}}">
-        <h3>{{mod.title}}</h3>
-        <a href="{%url 'module_content_list' mod.id%}">View</a>
-        <a href="{%url 'update_module' course.id mod.id%}">Edit</a>
-        <a href="{%url 'delete_module' course.id mod.id%}">Delete</a>
+<section id="course-brief" class="shadow">
+    <div class="container jumboman">
+        <div class="d-flex justify-content-between">
+            <div >
+                <h4 class="display-4">{{course.title}}</h3>
+            </div>
+            <div class="actions" >
+                <a href="{%url 'course_update' course.id %}" >
+                    <i class="fa-solid fa-pencil text-primary"></i>
+                </a>
+                <a href="{%url 'course_delete' course.id %}">
+                    <i class="fa-solid fa-trash "></i>
+                </a>
+            </div>
+        </div>
+        
+        <p class="my-para-1">{{course.overview}}</p>
     </div>
-    {%empty%}
-    <p>No modules yet</p>
-    <a href="{%url 'create_module' course.id %}">Add Module</a>
-    {%endfor%}
-</div>
-<div id="module" style="border: 1px solid black;">
-    <h2>{{module.title}}</h2>
-    <p>{{module.description}}</p>
-    <div id="content">
-        {%for content in module.contents.all %}
-            {% with item=content.item %}
-                <p>{{item.title}}</p>
-                <a href="{%url 'update_content' module.id item|model_name item.id%}">Edit</a>
-                <a href="{%url 'delete_content' module.id %}">Delete</a>
-            {%endwith%}
-        {%empty%}
-            <p>No Content Yet</p>
-        {%endfor%}
-        <p>Add content</p>
-        <a href="{%url 'create_content' module.id 'text'%}">text</a>
-        <a href="{%url 'create_content' module.id 'image'%}">image</a>
-        <a href="{%url 'create_content' module.id 'file'%}">file</a>
-        <a href="{%url 'create_content' module.id 'video'%}">video</a>
-
+</section>
+<section id="main">
+    <div class="container-fluid">
+      <div class="row">
+          <!--Side nav-->
+        <div class="col-md-2 bg-primary p-0">
+            <ul class=" nav sidenav flex-column mt-3 mb-3 " id="sideNav">
+                {% for mod in all_modules %}
+                <li class="nav-item">
+                    <a class="nav-link {%if mod.id == module.id %}active{%endif%}"href="{%url 'module_content_list' mod.id %}">{{mod.title}}</a>
+                </li> 
+                {%empty%}
+                {%endfor%}
+                <li class="nav-item">
+                    <a class="nav-link fw-bolder" href="{%url 'create_module' course.id %}"><i class="fas fa-plus"></i> Add Module</a>
+                </li>
+            
+            </ul>
+        </div>
+        <!--Content-->
+        <div class="col">
+            <div class="container module-content-main" id="content" >
+                    <div class="d-flex justify-content-between ">
+                        <div >
+                            <h6 class="display-6 mb-3">{{module.title}}</h6>
+                        </div>
+                        <div class="actions" >
+                            <a href="{%url 'update_module' course.id module.id %}" >
+                                <i class="fa-solid fa-pencil text-primary"></i>
+                            </a>
+                            <a href="{%url 'delete_module' course.id module.id %}">
+                                <i class="fa-solid fa-trash "></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <p class="my-para-1">{{module.description}}</p>
+    
+                    <ul class="list-group module-content-list">
+                        {% for content in module.contents.all %}
+                            {%with content.item as item%}
+                            <li class="list-group-item border-primary" >
+                                <div class="pt-2">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h5>{{item.title}}</h5>
+                                        </div>
+                                        <div class="actions" >
+                                            <a href="{%url 'update_content'  module.id item|model_name item.id %}" >
+                                                <i class="fa-solid fa-pencil text-primary"></i>
+                                            </a>
+                                            <a href="{%url 'delete_content' content.id %}">
+                                                <i class="fa-solid fa-trash "></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    {{item.render}}
+                                </div>
+                            </li>
+                            {%endwith%}
+                        {%empty%}
+                        <div class="alert alert-info" role="alert">
+                            No Content Yet
+                        </div>
+                        {%endfor%}
+                    </ul>
+                    <div class="mt-4">
+                        <h4>Add Content</h4>
+                        <div>
+                            <a href="{%url 'create_content' module.id 'text'%}" class="mt-3 btn btn-primary-solid me-1">Text</a>
+                            <a href="{%url 'create_content' module.id 'image'%}" class="mt-3 btn btn-primary-solid me-1">Image</a>
+                            <a href="{%url 'create_content' module.id 'file'%}" class="mt-3 btn btn-primary-solid me-1">File</a>
+                            <a href="{%url 'create_content' module.id 'video'%}" class="mt-3 btn btn-primary-solid me-1">Video</a>
+                        </div>
+                    </div>
+            </div>
+        </div>
+      </div>
     </div>
-
-</div>
+  </section>
 {%endwith%}
-
-
-
 {% endblock %}
+

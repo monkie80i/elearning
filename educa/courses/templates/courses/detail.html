@@ -1,26 +1,47 @@
-{% extends "base.html" %}
+{% extends 'courses/public_base.html'%}
 
 {% block title %}{{course.title}}{% endblock %}
-{% block content %}
-{%if request.user.is_authenticated %}
-<a href="{% url 'logout' %}">Logout</a>
-<a href="{% url 'user_home' %}">Home</a>
-{%else%}
-<a href="{% url 'login' %}">Login</a>
-{%endif%}
-<h1>{{course.title}}</h1>
-<p>{{course.overview}}</p>
-<p>Instructor:{{course.user.username}}</p>
-<p>{{course.modules.count}} modules</p>
 
-{% if request.user.is_authenticated and request.user.is_student%}
-    <form action="{%url 'student_enroll_course' %}" method="post">
-        {{form.as_p}}
-        {% csrf_token %}
-        <p><input type="submit" value="Enroll Now"></p>   
-    </form>
-{%else%}
-<a href="{% url 'user_registration' 'student' %}">Register To Enroll</a>
-{%endif%}
-    
-{% endblock %}
+{% block sidenav_links%}
+    <li class="nav-item">
+        <a class="nav-link active"href="{%url 'course_list' %}">All Courses</a>
+    </li>
+  {%if request.user.is_authenticated %}
+    {%if request.user.is_teacher%}
+        <li class="nav-item">
+            <a class="nav-link " href="{%url 'manage_course_list' 'all' %}">My Courses</a>
+        </li>
+    {%elif request.user.is_student%}
+        <li class="nav-item">
+            <a class="nav-link" href="{%url 'student_course_list' %}">Enrolled Courses</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Saved Courses</a>
+        </li>
+    {%endif%}
+  {%endif%}
+{%endblock%}
+
+{%block main_content %}
+<div class="container teacher-home-main" id="content">
+    <h5 class="display-5">{{course.title}}</h5>
+    <div id="your-courses" class="container teacher-home-your-courses">
+        <div class="course-list">
+            <div id="course-{{course.id}}">
+                <p class="lead m-0 p0"><b>Instructor: </b>{{user.username}}</p>
+                <p class="lead ">{{course.modules.count}} modules</p>
+                <p>{{course.overview}}</p>
+                {% if request.user.is_authenticated and request.user.is_student%}
+                    <form action="{%url 'student_enroll_course' %}" method="post">
+                        {{form.as_p}}
+                        {% csrf_token %}
+                        <input type="submit" value="Enroll Now" class="btn btn-primary-solid btn-big">   
+                    </form>
+                {%else%}
+                <a href="{% url 'user_registration' 'student' %}" class="btn btn-primary-solid btn-big">Register To Enroll</a>
+                {%endif%}
+            </div>
+        </div>
+    </div>              
+</div>
+{%endblock%}
