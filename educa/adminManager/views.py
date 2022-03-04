@@ -60,7 +60,7 @@ class UserRegistrationView(View):
     def get(self,request,user_type=None,*args,**kwargs):
         initial = self.get_inital_of_user_type(user_type)
         form = self.form_class(initial=initial)
-        return render(request,self.template_name,{'form':form})
+        return render(request,self.template_name,{'form':form,'user_type':user_type})
     
     def post(self,request,user_type=None,*args,**kwargs):
         error = None

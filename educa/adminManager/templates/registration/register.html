@@ -1,14 +1,65 @@
 {% extends "base.html" %}
 
-{% block title %}User registration{% endblock %}
+{% block title %}Register{% endblock %}
+
+{% block nav_items %}
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'course_list' %}">courses</a>
+    </li>
+    {% if request.user.is_authenticated %}
+        <li class="nav-item">
+            <a class="nav-link" href="{%url 'logout'%}">logout</a>
+        </li>
+    {%else%}
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'login' %}">Login</a>
+        </li>
+    {%endif%}
+{% endblock %}
+
 {% block content %}
-<h1>Sign Up</h1>
-{% if error %}
-    <p>{{error}}</p>
-{%endif%}
-<form action="" method="post">
-    {{ form.as_p }}
-    {% csrf_token %}
-    <p><input type="submit" value="Submit"></p>
- </form>
+<section>
+    <div class="position-relative min-vh-100">
+      <div class="register-form-container border border-primary rounded ">
+        <form class="register-form-body">
+            
+            <h3 class="text-center mb-3">
+                {% if user_type == 'student' %}
+                Student Register
+                {%else%}
+                Teacher Register
+                {%endif%}
+            </h3>
+          {% for field in form.visible_fields %}
+                    <div class="mb-3">
+                        <label for="{{ form.password.id_for_label }} " class="form-label">{{field.label}}</label>
+                        {{field}} 
+                        <div class="form-help text-danger">{{ field.errors }}</div>                      
+                    </div>
+                {% endfor %}
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}" />
+                <button type="submit" value="save" class="btn btn-primary-solid w-100">Submit</button>
+          
+        </form>
+        <hr>
+        
+            {% if user_type == 'student' %}
+            <h4 class="text-center mb-3 mt-3">Not a Student?</h4>
+            <a class="btn btn-byzantium-solid w-100" href="{%url 'user_registration' 'teacher'%}">Teacher Registration</a>
+            {%else%}
+            <h4 class="text-center mb-3 mt-3">Not a Teacher?</h4>
+            <a class="btn btn-byzantium-solid w-100" href="{%url 'user_registration' 'student'%}">Student Registration</a>
+            {%endif%}
+            
+        
+      </div>
+            
+    </div>
+</section>
+{% endblock %}
+
+{% block domready %}
+
+   
 {% endblock %}
