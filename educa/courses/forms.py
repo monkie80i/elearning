@@ -1,5 +1,6 @@
 from django import forms
-from .models import Course,Module
+from .models import Course,Module,Text,File
+from django.forms.widgets import FileInput
 
 class CourseForm(forms.ModelForm):
     class Meta:
@@ -33,5 +34,7 @@ class CourseEnrollForm(forms.Form):
         for visible in self.visible_fields():
             visible.field.widget.attrs['class'] = 'form-control border-primary'
 
+
+    
 
     

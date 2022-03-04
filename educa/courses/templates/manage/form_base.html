@@ -59,32 +59,7 @@
 
 
 {% block domready %}
-  $('#base_form').children().filter('.mb-3').each(function(index){
-    console.log($(this))
-    let input = $(this).children().filter('input').first();
-    
-    if(input){
-      if(input.attr('type')=='checkbox'){
-        input.addClass('btn-check');
-        input.attr("autocomplete","off");
-        input.next().addClass("btn btn-primary-solid")
-      }
-      else{
-        input.addClass('form-control border-primary');
-      }
-      
-    }
-    let ta = $(this).children().filter('textarea').first();
-    console.log($(this).children().filter('textarea').first())
-    if(ta){
-      ta.addClass('form-control border-primary')
-    }
-
-    let select = $(this).children().filter('select').first();
-    if(select){
-      select.addClass('form-control border-primary')
-    }
-  });
+  
 
 
 {% endblock %}

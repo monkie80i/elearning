@@ -5,7 +5,7 @@
 {% block nav_items %}
     {%if request.user.is_authenticated %}
     <li class="nav-item">
-      <a class="nav-link active" href="{%url 'user_home' %}">Home</a>
+      <a class="nav-link" href="{%url 'user_home' %}">Home</a>
     </li>
     <li class="nav-item">
       <a class="nav-link" href="{%url 'course_list' %}">courses</a>
@@ -22,6 +22,9 @@
     </li> 
     <li class="nav-item">
       <a class="nav-link" href="{%url 'login'%}">Login</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{%url 'user_registration' 'teacher'%}">register</a>
     </li>
     {%endif%}
 

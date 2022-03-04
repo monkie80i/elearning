@@ -4,6 +4,7 @@ import imp
 from mimetypes import init
 from multiprocessing import context
 from tempfile import template
+from tkinter import Image
 from typing import Reversible
 from django.shortcuts import render,redirect
 from django.views import View
@@ -23,7 +24,7 @@ from django.apps import apps
 from django.forms.models import modelform_factory
 from django.forms import Form
 from django.db.models import Count
-
+from django import forms
 # Create your views here.
 class SubjectQSMixin(object):
     subjects_qs = Subject.objects.all()
@@ -242,7 +243,16 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
         return None
     
     def get_form(self,model,*args,**kwargs):
-        Form =  modelform_factory(model=model,exclude=['order','owner','created','updated'])   
+        Form =  modelform_factory(
+            model=model,
+            exclude=['order','owner','created','updated'],
+            )  
+        #import inspect
+        base_fields = Form.base_fields
+        for fields in base_fields.values():
+            #print(dir(Form.base_fields[key]))
+            fields.widget.attrs['class']='form-control border-primary'
+        
         return Form(*args,**kwargs)
 
     def dispatch(self, request,module_id,model_name,id=None, *args, **kwargs):
