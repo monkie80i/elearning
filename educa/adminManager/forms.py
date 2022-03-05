@@ -5,8 +5,8 @@ from .models import User,Profile
 from django import forms
 
 class UserForm(forms.ModelForm):
-    password_1 = forms.CharField(max_length=100,label='Enter Passowrd',required=True)
-    password_2 = forms.CharField(max_length=100,label='Re-enter Passwrod',required=True)
+    password_1 = forms.CharField(max_length=100,label='Enter Passowrd',required=True,widget=forms.PasswordInput)
+    password_2 = forms.CharField(max_length=100,label='Re-enter Passwrod',required=True,widget=forms.PasswordInput)
 
     class Meta:
         model = User
