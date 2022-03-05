@@ -1,4 +1,5 @@
 
+import collections
 from distutils.log import Log
 import imp
 from mimetypes import init
@@ -27,6 +28,13 @@ from django.db.models import Count
 from django import forms
 from .widgets import MyFileInput
 
+
+###helpers
+
+def is_add_another(request):
+    return 'add' in request.POST.dict()
+
+
 # Create your views here.
 class SubjectQSMixin(object):
     subjects_qs = Subject.objects.all()
@@ -50,12 +58,14 @@ class OwnerCourseMixin(OwnerMixin,SubjectQSMixin,LoginRequiredMixin,PermissionRe
 class ManageCourseView(OwnerCourseMixin,View):
     permission_required = 'courses.view_course'
     all_subjects = Subject.objects.all()
-    def get(self,request,subject=None):
-        if subject not in (None,'all','All'):
-            qs = self.qs.filter(subject__title=subject)
 
+    def get(self,request,subject=None):
+        if subject.lower() not in (None,'all'):
+            qs = self.qs.filter(subject__title=subject)
         else:   
-            qs=self.qs
+            qs = self.qs
+            subject = None
+        print(subject)
         return render(request,self.list_template_name,{'object_lsit':qs,'subject':subject,'all_subjects': self.all_subjects})
 
 manage_course_view = ManageCourseView.as_view()
@@ -66,7 +76,7 @@ class CourseCreateView(OwnerCourseMixin,View):
     
     def get(self,request):
         context_obj = {
-            'form':self.form_class
+            'form':self.form_class()
         }
         return render(request,self.edit_template_name,context_obj)
     
@@ -77,7 +87,9 @@ class CourseCreateView(OwnerCourseMixin,View):
                 instance = form.save(commit=False)
                 instance.user = request.user
                 instance.save()
-                return redirect(reverse_lazy('manage_course_list',args=['all']))
+                if is_add_another(request):
+                    return redirect('course_create')
+                return redirect(reverse_lazy('manage_course_detail',args=[instance.id]))
             except Exception as e:
                 traceback.print_exc(file=sys.stdout)
                 print('e:',e)
@@ -96,32 +108,22 @@ class CourseUpdateView(OwnerCourseMixin,View):
     form_class = CourseForm
 
     def get(self,request,id):
-        try:
-            course_obj = self.qs.filter(id=id).first()
-            context_obj = {
-                'form':self.form_class(instance=course_obj),
-                'object':course_obj
-            }
-            return render(request,self.edit_template_name,context_obj)
-        except Exception as e:
-            traceback.print_exc(file=sys.stdout)
-            print('e:',e)
-            raise Http404('oops')
+        course_obj = get_object_or_404(self.qs,id=id)
+        context_obj = {
+            'form':self.form_class(instance=course_obj),
+            'object':course_obj
+        }
+        return render(request,self.edit_template_name,context_obj)
             
     
     def post(self,request,id):
-        try:
-            course_obj = self.qs.filter(id=id).first()
-            form = self.form_class(request.POST or None,instance=course_obj)
-            if form.is_valid():
-                form.save()
-                return redirect(reverse_lazy('manage_course_list',args=['all']))
-                #change to detail
-        except Exception as e:
-            traceback.print_exc(file=sys.stdout)
-            print('e:',e)
-            raise Http404('oops')
-
+        course_obj = get_object_or_404(self.qs,id=id)
+        form = self.form_class(request.POST or None,instance=course_obj)
+        if form.is_valid():
+            instance = form.save()
+            if is_add_another(request):
+                return redirect('course_create')
+            return redirect(reverse_lazy('manage_course_detail',args=[instance.id]))
 
 course_update_view = CourseUpdateView.as_view()
 
@@ -129,7 +131,6 @@ class CourseDeleteView(OwnerCourseMixin,DeleteView):
     permission_required = 'courses.delete_course'
     success_url = '/manage/course/list/all'
     template_name = 'manage/courses/delete.html'
-    #permission_required = 'courses.delete_course'
 
 course_delete_view =CourseDeleteView.as_view()
 
@@ -138,18 +139,13 @@ class CourseDetailView(OwnerCourseMixin,View):
     permission_required = 'courses.view_course'
 
     def get(self,request,id):
-        try:
-            course = self.qs.filter(id=id).first()
-            modules = course.modules.all()
-            context_obj = {
-                'course':course,
-                'modules':modules
-            }
-            return render(request,self.template_name,context_obj)
-        except Exception as e:
-            traceback.print_exc(file=sys.stdout)
-            print('e:',e)
-            raise Http404('oops')
+        course = get_object_or_404(self.qs,id=id)
+        modules = course.modules.all()
+        context_obj = {
+            'course':course,
+            'modules':modules
+        }
+        return render(request,self.template_name,context_obj)
 
 course_detail_view = CourseDetailView.as_view()
 
@@ -161,63 +157,41 @@ class CourseModuleMixin(LoginRequiredMixin):
     
 class ModuleCreateUpdateView(CourseModuleMixin,View):
     form_class = ModuleForm
+    modules = None
+    module = None
+    context = {}
 
     def setup(self, request,course_id,id=None ,*args, **kwargs):
-        self.course = Course.objects.filter(user=request.user).filter(id=course_id).first()
-        if not self.course:
-            raise Exception('Course Doesnot Exist')
+        self.course = get_object_or_404(Course,id=course_id,user=request.user)
         if id:
             self.modules = self.model.objects.filter(course=self.course)
-            self.module = self.modules.filter(id=id).first()
-            if not self.module:
-                raise Exception('Module Does Not Exist')
+            self.module = get_object_or_404(self.modules,id=id)
         return super().setup(request,course_id,id=None, *args, **kwargs)
 
     def get(self,request,course_id,id=None):
-        try: 
-            if id:
-                form = self.form_class(instance=self.module)
-                context = {
-                    'object':self.module,
-                    'form':form,
-                    'course_id':course_id
-                }
-            else:
-                form =  self.form_class()
-                context = {
-                    'form':form,
-                    'course_id':course_id
-                }
-            return render(request,self.edit_template_name,context)
-        except Exception as e:
-            traceback.print_exc(file=sys.stdout)
-            print('e:',e)
-            raise Http404('oops')
+        self.context['course_id'] = course_id
+        if id:
+            form = self.form_class(instance=self.module)
+            self.context['object'] = self.module
+            self.context['form'] = form
+        else:
+            form =  self.form_class()
+            self.context['form'] = form
+        return render(request,self.edit_template_name,self.context)
 
     def post(self,request,course_id,id=None):
-        try:
-            try:
-                is_add_another = request.POST.dict().pop('add')
-            except:
-                is_add_another=False
-            if id:
-                form = self.form_class(request.POST or None,instance=self.module)
+        form = self.form_class(request.POST or None,instance=self.module)
+        if form.is_valid():
+            if not id :
+                instance = form.save(commit=False)
+                instance.course = self.course
+                instance.save()
             else:
-                form =  self.form_class(request.POST)
-            if form.is_valid():
-                if not id :
-                    instance = form.save(commit=False)
-                    instance.course = self.course
-                    instance.save()
-                else:
-                    instance = form.save()
-                if is_add_another:
-                    return redirect('create_module',course_id)
-            return redirect('module_content_list',instance.id)
-        except Exception as e:
-            traceback.print_exc(file=sys.stdout)
-            print('e:',e)
-            raise Http404('oops')
+                instance = form.save()
+            if is_add_another(request):
+                return redirect('create_module',course_id)
+        return redirect('module_content_list',instance.id)
+
 
 module_create_update_view = ModuleCreateUpdateView.as_view()
 
@@ -258,10 +232,8 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
             exclude=['order','owner','created','updated'],
             widgets=widgets
             )  
-        #import inspect
         base_fields = Form.base_fields
         for fields in base_fields.values():
-            #print(dir(Form.base_fields[key]))
             fields.widget.attrs['class']='form-control border-primary'
         
         return Form(*args,**kwargs)
@@ -290,16 +262,18 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
             data=request.POST,
             files=request.FILES
         )
-        #print('id',id)
 
-        #print('files',request.FILES)
         if form.is_valid():
             obj = form.save(commit=False)
             obj.owner = request.user
             obj.save()
             if not id:
                 Content.objects.create(module = self.module,item=obj)
-            #redirect to content list later 'module_content_list'
+            if is_add_another(request):
+                next_content_type = request.POST.dict()['add']
+                if next_content_type not in ('text','image','file','video'):
+                    next_content_type = 'text'
+                return redirect('create_content',module_id,next_content_type)
             return redirect('module_content_list',module_id)
         return render(request,self.template_name,{'form':form,'object':self.obj})
 

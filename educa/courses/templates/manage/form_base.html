@@ -45,7 +45,9 @@
                   {% csrf_token %}
                   <div class="">
                       <input type="submit" class="mb-3 btn btn-primary-solid fs-5" value='save'></input>
+                      {% block save_and_add_another %}
                       <input type="submit" name="add" value="Save and add another" class="mb-3 btn btn-primary-solid fs-5"></input>
+                      {% endblock %}
                       <a href="{% block cancel_href %}{%endblock%}" class="mb-3 btn btn-danger-solid fs-5">Cancel</a>
                   </div>
                 </form> 

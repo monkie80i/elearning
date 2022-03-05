@@ -29,4 +29,10 @@
   {% endif %}
 {% endblock %}
 
-{% block cancel_href %}{%url 'manage_course_list' 'all' %}{%endblock%}
+{% block cancel_href %}
+  {%if object %}
+    {%url 'module_content_list' object.id %} 
+  {% else %}
+    {%url 'manage_course_detail' course_id %}
+  {% endif %}
+{%endblock%}

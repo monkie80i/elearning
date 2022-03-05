@@ -28,6 +28,15 @@
   {% endif %}
 {% endblock %}
 
+{% block save_and_add_another %}
+  <h6> Save and Add another </h6>
+  <input type="submit" name="add" value="text" class="mb-3 btn btn-primary-solid fs-5"></input>
+  <input type="submit" name="add" value="image" class="mb-3 btn btn-primary-solid fs-5"></input>
+  <input type="submit" name="add" value="file" class="mb-3 btn btn-primary-solid fs-5"></input>
+  <input type="submit" name="add" value="video" class="mb-3 btn btn-primary-solid fs-5"></input>
+  <br>
+{% endblock %}
+
 {% block cancel_href %}{%url 'module_content_list' module.id %}{%endblock%}
 
 

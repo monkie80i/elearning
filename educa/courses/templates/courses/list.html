@@ -27,7 +27,7 @@
     <h4 class="display-4">All Courses</h4>
     <div id="your-courses" class="container teacher-home-your-courses">
         <nav class="nav subject-nav mb-4 mt-4">
-            <a class="nav-link {%if not subject %}active{%endif%}" aria-current="page" href="{%url 'manage_course_list' 'all' %}">All</a>
+            <a class="nav-link {%if not subject %}active{%endif%}" aria-current="page" href="{%url 'course_list' %}">All</a>
                 {% for sub in all_subjects %}
                 <a class="nav-link {%if sub == subject %}active{%endif%}" href="{% url 'course_list_subject' sub.slug %}">{{sub}}</a>
                 {%endfor%}
@@ -36,7 +36,7 @@
             {%for course in courses %}
             <div class="course-item" id="course-{{course.id}}">
                 <h1 style="text-decoration: none;">{{course.title}}</h1>
-                <p class="lead m-0 p0"><b>Instructor: </b>{{user.username}}</p>
+                <p class="lead m-0 p0"><b>Instructor: </b>{{course.user.username}}</p>
                 <p class="lead ">{{course.modules.count}} modules</p>
                 <p>{{course.overview}}</p>
                 <a href="{%url 'public_course_detail' course.id %}" type="button" class="btn btn-primary-solid ">View</a>
