@@ -25,6 +25,8 @@ from django.forms.models import modelform_factory
 from django.forms import Form
 from django.db.models import Count
 from django import forms
+from .widgets import MyFileInput
+
 # Create your views here.
 class SubjectQSMixin(object):
     subjects_qs = Subject.objects.all()
@@ -243,9 +245,18 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
         return None
     
     def get_form(self,model,*args,**kwargs):
+        widgets = None
+        #print(model._meta.model_name)
+        if model._meta.model_name in ('file','image'):
+            widgets = {
+                #'file': forms.FileInput()
+                'file':MyFileInput()
+            }
+
         Form =  modelform_factory(
             model=model,
             exclude=['order','owner','created','updated'],
+            widgets=widgets
             )  
         #import inspect
         base_fields = Form.base_fields
@@ -265,6 +276,7 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
     def get(self, request,module_id,model_name,id=None):
         form = self.get_form(self.Model,instance=self.obj)
         context_obj = {
+            'type': model_name.capitalize(),
             'form':form,
             'object':self.obj,
             'module':self.module
@@ -278,7 +290,7 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
             data=request.POST,
             files=request.FILES
         )
-        print('id',id)
+        #print('id',id)
 
         #print('files',request.FILES)
         if form.is_valid():
@@ -312,6 +324,7 @@ class ContentDeleteView(View,LoginRequiredMixin):
     
     def post(self,request,content_id, *args, **kwargs):
         module = self.content_obj.module
+        print('mod _ id',module.id)
         self.content_obj.item.delete()
         self.content_obj.delete()
         return redirect('module_content_list',module.id)
