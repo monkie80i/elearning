@@ -387,3 +387,18 @@ class StudentCourseListView(View,LoginRequiredMixin):
         return render(request,self.template_name,{'courses':courses})
 
 student_course_list_view = StudentCourseListView.as_view()
+
+
+class ManageContentPreView(View,LoginRequiredMixin):
+    template_name = 'manage/contents/preview.html'
+
+    def get(self,request,course_id,*args,**kwargs):
+        course = get_object_or_404(Course,id=course_id,user=request.user)
+        context = {'course':course}
+        if 'module_id' in self.kwargs:
+            context['module'] = get_object_or_404(Module,id=self.kwargs['module_id'])
+        else:
+            context['module'] = course.modules.all().first()
+        return render(request,self.template_name,context)
+
+manage_course_preview = ManageContentPreView.as_view()
