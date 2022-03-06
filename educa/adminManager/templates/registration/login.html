@@ -16,38 +16,54 @@
 
 {% block content %}
 <section>
-    <div class="position-relative min-vh-100">
-        <div class=" register-form-container border border-primary abs-center rounded " >
-            {% if request.user.is_authenticated %}
-            <div class="alert alert-danger" role="alert">
-                You dont have permission to this page. Kindly <a href="{%url 'logout'%}">logout</a> to togin to another account.
-            </div>
-            {%else%}
-            <form class="register-form-body" action="" method="post">
-                <h3 class="text-center mb-3">Login</h3>
-                {% if form.errors %}
+    <div class="container mb-4 mt-4 vh-100">
+        <div class="register-form-container border border-primary rounded " >
+            <div class="row">
+                {% if request.user.is_authenticated %}
                 <div class="alert alert-danger" role="alert">
-                    Your username and password didn't match. Please try again.
+                    You dont have permission to this page. Kindly <a href="{%url 'logout'%}">logout</a> to togin to another account.
                 </div>
-                {% endif %}
-                {% for field in form %}
-                    <div class="mb-3">
-                        <label for="{{ form.password.id_for_label }} " class="form-label">{{field.label}}</label>
-                        <input class="form-control border-primary" id="{{ field.id_for_label }}" maxlength="{{ field.max_length }}" name="{{ field.html_name }}" value="{% if field.value %}{{ field.value }}{% endif%}" type="{{field.widget_type}}" /> 
-                        <div class="form-help">{{ field.errors }}</div>                      
+                {%else%}
+                <div class="col-md-6 d-flex justify-content-center register-form-left">
+                    <form  action="" method="post">
+                        <h3 class="text-center mb-3">Login</h3>
+                        {% if form.errors %}
+                        <div class="alert alert-danger" role="alert">
+                            Your username and password didn't match. Please try again.
+                        </div>
+                        {% endif %}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ form.password.id_for_label }} " class="form-label">{{field.label}}</label>
+                                <input class="form-control border-primary" id="{{ field.id_for_label }}" maxlength="{{ field.max_length }}" name="{{ field.html_name }}" value="{% if field.value %}{{ field.value }}{% endif%}" type="{{field.widget_type}}" /> 
+                                <div class="form-help">{{ field.errors }}</div>                      
+                            </div>
+                        {% endfor %}
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ next }}" />
+                        <button type="submit" value="save" class="btn btn-primary-solid w-100">Submit</button>
+                    </form>
+                </div>
+                <div class="col-md-6 d-flex flex-column justify-content-around  register-form-right">
+                    <div class="d-flex justify-content-center">
+                        <div>
+                        <h4 class="text-center mb-3 mt-3">Login with</h4>
+                        <a class="btn btn-byzantium-solid">Facebook</a>
+                        <a class="btn btn-byzantium-solid">Google</a>
+                        <a class="btn btn-byzantium-solid">Apple</a>
+                        </div>
+                    </div>  
+                    <div class="d-flex justify-content-center">
+                        <div>
+                            <h4 class="text-center mb-3 mt-3">Not a Memeber yet?</h4>
+                            <a class="btn btn-byzantium-solid w-100" href="{% url 'user_registration' 'student' %}">Student Registration</a>
+                            <h5 class="text-center mb-2 mt-2">OR</h5>
+                            <a class="btn btn-byzantium-solid w-100" href="{% url 'user_registration' 'teacher' %}">Teacher Registration</a>
+                        </div> 
                     </div>
-                {% endfor %}
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{{ next }}" />
-                <button type="submit" value="save" class="btn btn-primary-solid w-100">Submit</button>
-            </form>
-            <hr>
-            <h4 class="text-center mb-3 mt-3">Not a Memeber yet?</h4>
-            <a class="btn btn-byzantium-solid w-100" href="{% url 'user_registration' 'student' %}">Student Registration</a>
-            <h5 class="text-center mb-2 mt-2">OR</h5>
-            <a class="btn btn-byzantium-solid w-100" href="{% url 'user_registration' 'teacher' %}">Teacher Registration</a>
-            {%endif%}
-            
+                </div>
+                {%endif%}
+            </div>
         </div>
             
     </div>
