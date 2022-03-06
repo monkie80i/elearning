@@ -244,21 +244,29 @@
 
 .register-form{
     &-container{
-        position: absolute;
+
         padding: 2rem 2.5rem;
-        width: 25rem;
-        top:3rem;
-        //right: 50%;
-        left: 50%;
-        transform: translateX(-50%);
+        
 
         @include media-breakpoint-down(sm){
             padding: 2rem 1rem;
-            width: 20rem;
+        }
+
+        form {
+            width: 80%;
         }
     }
 
+    &-left {
+        border-right: 1px solid $primary;
+
+        @include media-breakpoint-down(md){
+            border-right:none;
+            padding-bottom: 3rem;
+            border-bottom: 1px solid $primary;
+        }
     
+    }
     
     
 }

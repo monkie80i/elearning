@@ -11572,17 +11572,24 @@ textarea.form-control-lg {
 }
 
 .register-form-container {
-  position: absolute;
   padding: 2rem 2.5rem;
-  width: 25rem;
-  top: 3rem;
-  left: 50%;
-  transform: translateX(-50%);
 }
 @media (max-width: 575.98px) {
   .register-form-container {
     padding: 2rem 1rem;
-    width: 20rem;
+  }
+}
+.register-form-container form {
+  width: 80%;
+}
+.register-form-left {
+  border-right: 1px solid #23CE6B;
+}
+@media (max-width: 767.98px) {
+  .register-form-left {
+    border-right: none;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid #23CE6B;
   }
 }
 
