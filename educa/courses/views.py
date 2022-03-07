@@ -18,6 +18,7 @@ from django.http import Http404,HttpResponse
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import DeleteView #CreateView, UpdateView,
 from django.core.exceptions import ObjectDoesNotExist
+import copy,traceback,sys,json,math
 from django.forms.models import model_to_dict
 from django.contrib.auth.mixins import LoginRequiredMixin,PermissionRequiredMixin
 from django.apps import apps
@@ -33,6 +34,15 @@ from .widgets import MyFileInput
 def is_add_another(request):
     return 'add' in request.POST.dict()
 
+
+def paginate(qs,page_size,page_number):
+    """Thake s queryset or an list ,
+    page_size is the number of item in one page,
+    page_number starts from 1 to length of qs/page_size
+    """
+    start = (page_number-1)*page_size
+    end = page_number*page_size
+    return qs[start:end]
 
 # Create your views here.
 class SubjectQSMixin(object):
@@ -320,18 +330,28 @@ manage_module_content_list = ManageModuleContentList.as_view()
 #public views
 class CourseListView(View):
     template_name = 'courses/list.html'
+    page_size = 2
     
     def get(self,request,subject=None, *args, **kwargs):
+        
         subjects = Subject.objects.annotate(total_courses = Count('courses'))
         courses = Course.objects.annotate(total_modules=Count('modules'))
         if subject:
             subject = get_object_or_404(Subject,slug=subject)
             courses = courses.filter(subject=subject)
         context_obj = {
-            'courses':courses,
             'all_subjects':subjects,
             'subject':subject
         }
+        page_number = 1
+        total_pages = math.ceil(courses.count()/self.page_size)
+        if 'page_number' in self.kwargs:
+            page_number = self.kwargs['page_number']
+        courses = paginate(courses,self.page_size,page_number)
+        context_obj['courses'] = courses
+        context_obj['page_number'] = page_number
+        context_obj['total_pages'] = total_pages
+        print(context_obj)
         return render(request,self.template_name,context_obj)
 
 course_list_view = CourseListView.as_view()
