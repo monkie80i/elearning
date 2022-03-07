@@ -3,6 +3,7 @@ from .views import manage_course_view,course_create_view,course_update_view,cour
 
 urlpatterns = [
     path('manage/course/list/<str:subject>/',manage_course_view,name='manage_course_list'),
+    path('manage/course/list/<str:subject>/<int:page_number>/',manage_course_view,name='manage_course_list_page'),
     path('manage/course/create/',course_create_view,name = 'course_create'),
     path('manage/course/<int:id>/',course_detail_view,name='manage_course_detail'),
     path('manage/course/<int:id>/update/',course_update_view,name = 'course_update'),

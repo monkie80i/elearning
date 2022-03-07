@@ -1,5 +1,7 @@
 {% extends 'accounts/home.html'%}
 
+{%load course%}
+
 {% block title %}Course List{% endblock %}
 
 {% block sidenav_links%}
@@ -21,7 +23,7 @@
         <nav class="nav subject-nav mb-4 mt-4">
                 <a class="nav-link {%if not subject %}active{%endif%}" aria-current="page" href="{%url 'manage_course_list' 'all' %}">All</a>
                 {% for sub in all_subjects %}
-                <a class="nav-link {%if sub.title == subject %}active{%endif%}" href="{% url 'manage_course_list' sub %}">{{sub}}</a>
+                <a class="nav-link {%if sub == subject %}active{%endif%}" href="{% url 'manage_course_list' sub.slug %}">{{sub}}</a>
                 {%endfor%}
         </nav>
         <div class="course-list">
@@ -50,24 +52,49 @@
             </div>
             {%endfor%}
         </div>
-
+        
+        {%if total_pages > 1 %}
         <nav class="mt-5">
-            <ul class="pagination justify-content-center">
+          <ul class="pagination justify-content-center">
+            <li class="page-item {%if page_number == 1 %}disabled{%endif%}">
+              <a class="page-link" 
+                {%if subject%}
+                  href="{%url 'manage_course_list_page' subject.slug page_number|dec_one %}"
+                {%else%}
+                  href="{%url 'manage_course_list_page' 'all' page_number|dec_one %}"
+                {%endif%} 
+                aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            {% for page in total_pages|page_number_list %}
+              {% if page != None %}
               <li class="page-item">
-                <a class="page-link" href="#" aria-label="Previous">
-                  <span aria-hidden="true">&laquo;</span>
-                </a>
-              </li>
-              <li class="page-item"><a class="page-link" href="#">1</a></li>
-              <li class="page-item"><a class="page-link" href="#">2</a></li>
-              <li class="page-item"><a class="page-link" href="#">3</a></li>
-              <li class="page-item">
-                <a class="page-link" href="#" aria-label="Next">
-                  <span aria-hidden="true">&raquo;</span>
-                </a>
-              </li>
-            </ul>
-          </nav>
+                <a class="page-link"
+                {%if subject%}
+                  href="{%url 'manage_course_list_page' subject.slug page %}"
+                {%else%}
+                  href="{%url 'manage_course_list_page' 'all' page %}"
+                {%endif%}>{{page}}</a>
+              </li> 
+              {%else%}
+                <li class="page-item"><a class="page-link" href="#">...</a></li>
+              {%endif%}
+            {%endfor%}
+            <li class="page-item {%if page_number == total_pages %}disabled{%endif%}">
+              <a class="page-link" 
+                {%if subject%}
+                  href="{%url 'manage_course_list_page' subject.slug page_number|inc_one %}"
+                {%else%}
+                  href="{%url 'manage_course_list_page' 'all' page_number|inc_one %}"
+                {%endif%}  
+                aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        {%endif%}
     </div>              
 </div>
 {%endblock%}

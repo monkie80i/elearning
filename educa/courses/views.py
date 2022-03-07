@@ -67,15 +67,30 @@ class OwnerCourseMixin(OwnerMixin,SubjectQSMixin,LoginRequiredMixin,PermissionRe
 class ManageCourseView(OwnerCourseMixin,View):
     permission_required = 'courses.view_course'
     all_subjects = Subject.objects.all()
+    page_size = 2
 
-    def get(self,request,subject=None):
+    def get(self,request,subject=None,*args,**kwargs):
         if subject.lower() not in (None,'all'):
-            qs = self.qs.filter(subject__title=subject)
+            subject = get_object_or_404(self.all_subjects,slug=subject)
+            courses = self.qs.filter(subject__title=subject)
         else:   
-            qs = self.qs
+            courses = self.qs
             subject = None
         print(subject)
-        return render(request,self.list_template_name,{'object_lsit':qs,'subject':subject,'all_subjects': self.all_subjects})
+        context_obj = {
+            'subject':subject,
+            'all_subjects': self.all_subjects
+        }
+        page_number = 1
+        total_pages = math.ceil(courses.count()/self.page_size)
+        if 'page_number' in self.kwargs:
+            page_number = self.kwargs['page_number']
+        courses = paginate(courses,self.page_size,page_number)
+        context_obj['object_lsit'] = courses
+        context_obj['page_number'] = page_number
+        context_obj['total_pages'] = total_pages
+        print(context_obj)
+        return render(request,self.list_template_name,context_obj)
 
 manage_course_view = ManageCourseView.as_view()
 

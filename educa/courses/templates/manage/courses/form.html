@@ -26,5 +26,11 @@
 {% endblock %}
 
 
-{% block cancel_href %}{%url 'manage_course_detail' object.id %}{%endblock%}
+{% block cancel_href %}
+  {%if object %}
+    {%url 'manage_course_detail' object.id %}
+  {% else %}
+    {%url 'manage_course_list' 'all' %}
+  {% endif %}
+{%endblock%}
 
