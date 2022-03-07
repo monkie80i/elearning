@@ -18,7 +18,6 @@ from django.http import Http404,HttpResponse
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import DeleteView #CreateView, UpdateView,
 from django.core.exceptions import ObjectDoesNotExist
-import copy,traceback,sys,json
 from django.forms.models import model_to_dict
 from django.contrib.auth.mixins import LoginRequiredMixin,PermissionRequiredMixin
 from django.apps import apps
@@ -402,3 +401,28 @@ class ManageContentPreView(View,LoginRequiredMixin):
         return render(request,self.template_name,context)
 
 manage_course_preview = ManageContentPreView.as_view()
+
+class CourseUnEnrollView(View,LoginRequiredMixin):
+    form_class = CourseEnrollForm
+    template_name = 'students/course/confirm_unenroll.html'
+    context = {}
+
+    def get_success_url(self):
+        return reverse_lazy('student_course_list')
+
+    def get(self,request,course_id,*args,**kwargs):
+        course = get_object_or_404(Course,id=course_id,students__in=[request.user])
+        form = self.form_class({'course':course})
+        self.context['course'] = course
+        self.context['form'] = form
+        return render(request,self.template_name,self.context)
+
+    def post(self,request,course_id,*args,**kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            self.course = form.cleaned_data['course']
+            self.course.students.remove(self.request.user)
+        return redirect(self.get_success_url())
+        
+
+course_un_enroll_view = CourseUnEnrollView.as_view()

@@ -29,7 +29,7 @@
                 <p class="lead">{{course.modules.count}} modules</p>
                 <p>{{course.overview}}</p>
                 <a href="{%url 'student_course_detail' course.id %}" type="button" class="btn btn-primary-solid ">View</a>
-                <a href="#" type="button" class="btn btn-danger-solid ">Un Enroll</a>
+                <a href="{%url 'student_unenroll_course' course.id %}" type="button" class="btn btn-danger-solid ">Un Enroll</a>
             </div>
         {%empty%}
             <div class="alert alert-info" role="alert">

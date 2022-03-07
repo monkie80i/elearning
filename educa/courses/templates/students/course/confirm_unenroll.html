@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{%block title %}Unenroll{%endblock%}
+
+{% block nav_items %}
+<li class="nav-item">
+    <a class="nav-link" href="{%url 'user_home'%}">Home</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">courses</a>
+</li>
+  <li class="nav-item">
+    <a class="nav-link" href="{%url 'logout'%}">logout</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link disabled">account</a>
+  </li>
+{%endblock%}
+
+{% block content %}
+<section id="main">
+    <div class="container-fluid">
+      <div class="row">
+          <!--Side nav-->
+        <div class="col-md-2 bg-primary p-0">
+          <ul class=" nav sidenav flex-column mt-3 mb-3" id="sideNav">
+            <li class="nav-item">
+                <a class="nav-link "href="{%url 'course_list' %}">All Courses</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{%url 'manage_course_list' 'all' %}">My Courses</a>
+              </li>
+          </ul>
+        </div>
+        <!--Content-->
+        <div class="col">
+            <div class="container form-container" id="content">
+                <h1>Unenroll from course "{{ course.title }}" ?</h1>
+                <form action="" method="post">
+                    {{form}}
+                    {% csrf_token %}
+                    <p>Are you sure you want to uneneroll from "{{ course.title }}"?</p>
+                    <input class=" mb-3 btn btn-danger-solid" type="submit" value="Confirm">
+                    <a class="mb-3 btn btn-primary-solid" href="{%url 'manage_course_list' 'all' %}">Cancel</a>
+                </form>
+            </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+{% endblock %}
