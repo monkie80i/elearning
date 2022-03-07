@@ -23,6 +23,7 @@ urlpatterns = [
     path('course/<int:id>/',public_course_detail,name="public_course_detail"),
     path('enroll-course/',course_enroll_view,name="student_enroll_course"),
     path('enrolled/list/',student_course_list_view,name='student_course_list'),
+    path('enrolled/list/<int:page_number>/',student_course_list_view,name='student_course_list_page'),
     path('enrolled/course/<course_id>/',student_course_detail_view,name='student_course_detail'),
     path('enrolled/course/<course_id>/<module_id>/',student_course_detail_view,name='student_course_detail_module'),
     path('unenroll/<int:course_id>/',course_un_enroll_view,name='student_unenroll_course'),

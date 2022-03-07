@@ -1,6 +1,10 @@
+
 {% extends "base.html" %}
 
+{%load course %}
+
 {% block title %}Enrolled Courses{% endblock %}
+
 
 {% block nav_items %}
     <li class="nav-item">
@@ -71,25 +75,33 @@
                         </div>
                         {%endfor%}
                     </div>
-            
+                    
+                    {%if total_pages > 1 %}
                     <nav class="mt-5">
-                        <ul class="pagination justify-content-center">
+                      <ul class="pagination justify-content-center">
+                        <li class="page-item {%if page_number == 1 %}disabled{%endif%}">
+                          <a class="page-link" href="{%url 'student_course_list_page' page_number|dec_one %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                          </a>
+                        </li>
+                        {% for page in total_pages|page_number_list %}
+                          {% if page != None %}
                           <li class="page-item">
-                            <a class="page-link" href="#" aria-label="Previous">
-                              <span aria-hidden="true">&laquo;</span>
-                            </a>
-                          </li>
-                          <li class="page-item"><a class="page-link" href="#">1</a></li>
-                          <li class="page-item"><a class="page-link" href="#">2</a></li>
-                          <li class="page-item"><a class="page-link" href="#">3</a></li>
-                          <li class="page-item">
-                            <a class="page-link" href="#" aria-label="Next">
-                              <span aria-hidden="true">&raquo;</span>
-                            </a>
-                          </li>
-                        </ul>
-                      </nav>
-                </div>              
+                            <a class="page-link" href="{%url 'student_course_list_page' page %}">{{page}}</a>
+                          </li> 
+                          {%else%}
+                            <li class="page-item"><a class="page-link" href="#">...</a></li>
+                          {%endif%}
+                        {%endfor%}
+                        <li class="page-item {%if page_number == total_pages %}disabled{%endif%}">
+                          <a class="page-link" href="{%url 'student_course_list_page' page_number|inc_one %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                          </a>
+                        </li>
+                      </ul>
+                    </nav>
+                    {%endif%}
+                  </div>              
             </div>
             
         </div>

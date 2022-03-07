@@ -351,7 +351,7 @@ class CourseListView(View):
         context_obj['courses'] = courses
         context_obj['page_number'] = page_number
         context_obj['total_pages'] = total_pages
-        print(context_obj)
+        #print(context_obj)
         return render(request,self.template_name,context_obj)
 
 course_list_view = CourseListView.as_view()
@@ -400,10 +400,21 @@ student_course_detail_view = StudentCourseDetailView.as_view()
 
 class StudentCourseListView(View,LoginRequiredMixin):
     template_name = 'students/course/list.html'
+    page_size = 2
 
-    def get(self,request):
+    def get(self,request,*args,**kwargs):
         courses = Course.objects.filter(students__in=[request.user])
-        return render(request,self.template_name,{'courses':courses})
+        page_number = 1
+        context_obj = {}
+        total_pages = math.ceil(courses.count()/self.page_size)
+        if 'page_number' in self.kwargs:
+            page_number = self.kwargs['page_number']
+        courses = paginate(courses,self.page_size,page_number)
+        context_obj['courses'] = courses
+        context_obj['page_number'] = page_number
+        context_obj['total_pages'] = total_pages
+        print(context_obj)
+        return render(request,self.template_name,context_obj)
 
 student_course_list_view = StudentCourseListView.as_view()
 
