@@ -20,17 +20,17 @@ class UserHomeView(View,LoginRequiredMixin):
     template_name = 'accounts/home.html'
     
     def dispatch(self, request, *args, **kwargs):
+        max_courses = 5
         self.user = request.user
         if self.user.is_teacher:
-            courses = Course.objects.filter(user = request.user)
-            self.courses = courses[:10] if len(courses)>10 else courses
+            courses = Course.objects.filter(user = request.user)[:max_courses]
             self.context_object = {
-                'courses':self.courses,
+                'courses':courses,
                 'user':self.user
             }
             self.template_name = 'accounts/teacher_home.html'
         if self.user.is_student:
-            courses = Course.objects.filter(students=self.user)[:10]
+            courses = Course.objects.filter(students=self.user)[:max_courses]
             self.context_object = {
                 'courses':courses,
                 'user':self.user
