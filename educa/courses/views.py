@@ -13,7 +13,7 @@ from .models import Subject,Course,Module,Content
 from django.urls import reverse_lazy
 from .forms import CourseForm,ModuleForm,CourseEnrollForm
 from django.shortcuts import get_object_or_404
-from django.http import Http404,HttpResponse
+from django.http import Http404,HttpResponse,JsonResponse
 #from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import DeleteView #CreateView, UpdateView,
@@ -27,7 +27,8 @@ from django.forms import Form
 from django.db.models import Count
 from django import forms
 from .widgets import MyFileInput
-
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 
 ###helpers
 
@@ -472,3 +473,43 @@ class CourseUnEnrollView(View,LoginRequiredMixin):
         
 
 course_un_enroll_view = CourseUnEnrollView.as_view()
+
+#ordering Views
+
+
+@csrf_exempt
+@login_required
+def module_order(request,*args, **kwargs):
+    output = {}
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            print(data)
+            for id,order in data.items():
+                print(id,order)
+                Module.objects.filter(id=id,course__user = request.user).update(order=order)
+            output = {'message':'OK'}
+            return JsonResponse(output)
+        except Exception as e:
+            print(e)
+            output['message'] = 'NOT OK'
+            return JsonResponse(output)
+    output = {'message':'METHOD ERROR'}
+    return JsonResponse(output)
+
+@csrf_exempt
+@login_required
+def content_order(request,*args, **kwargs):
+    output = {}
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            for id,order in data.items():
+                print(id,order)
+                Content.objects.filter(id=id,module__course__user = request.user).update(order=order)
+            output = {'message':'OK'}
+            return JsonResponse(output)
+        except Exception as e:
+            print(e)
+            output['message'] = 'NOT OK'
+    return JsonResponse({'message':'METHOD ERROR'})

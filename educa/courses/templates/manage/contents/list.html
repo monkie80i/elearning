@@ -47,9 +47,9 @@
       <div class="row">
           <!--Side nav-->
         <div class="col-md-2 bg-primary p-0">
-            <ul class=" nav sidenav flex-column mt-3 mb-3 " id="sideNav">
+            <ul id="modules" class=" nav sidenav flex-column mt-3 mb-3 " id="sideNav">
                 {% for mod in all_modules %}
-                <li class="nav-item">
+                <li class="nav-item sortable" data-id="{{mod.id}}">
                     <a class="nav-link {%if mod.id == module.id %}active{%endif%}"href="{%url 'module_content_list' mod.id %}">{{mod.title}}</a>
                 </li> 
                 {%empty%}
@@ -83,10 +83,10 @@
                     
                     <p class="my-para-1">{{module.description}}</p>
     
-                    <ul class="list-group module-content-list">
+                    <ul id="module_content" class="list-group module-content-list">
                         {% for content in module.contents.all %}
                             {%with content.item as item%}
-                            <li class="list-group-item border-primary" >
+                            <li data-id={{content.id}} class="list-group-item border-primary" >
                                 <div class="pt-2">
                                     <div class="d-flex justify-content-between">
                                         <div>
@@ -130,3 +130,51 @@
 {%endwith%}
 {% endblock %}
 
+{%block scripts %}
+
+{%endblock%}
+
+{%block domready %}
+
+$( function() {
+    $( "#modules").sortable({
+        stop:function(event,ui){
+            modules_order = {};
+            $('#modules').children().filter('.sortable').each(function(){
+                modules_order[$(this).data('id')] = $(this).index();
+            })
+            console.log(modules_order);
+            $.ajax({
+                type: 'POST',
+                url: '{% url 'module_order' %}',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                data: JSON.stringify(modules_order),
+                success: function (data) {
+                    console.log(data)
+                }
+            });
+        }
+        
+    });
+    $( "#module_content").sortable({
+        stop:function(event,ui){
+            modules_order = {};
+            $('#module_content').children().each(function(){
+                modules_order[$(this).data('id')] = $(this).index();
+            })
+            console.log(modules_order);
+            $.ajax({
+                type: 'POST',
+                url: '{% url 'content_order' %}',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                data: JSON.stringify(modules_order),
+                success: function (data) {
+                    console.log(data)
+                }
+            });
+        }
+    });
+  });
+{%endblock%}

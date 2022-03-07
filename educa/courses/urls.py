@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import manage_course_view,course_create_view,course_update_view,course_delete_view,module_create_update_view,course_detail_view,module_delete_view,content_create_update_view,content_delete_view,manage_module_content_list,course_list_view,public_course_detail,course_enroll_view,student_course_detail_view,student_course_list_view,manage_course_preview,course_un_enroll_view
+from .views import manage_course_view,course_create_view,course_update_view,course_delete_view,module_create_update_view,course_detail_view,module_delete_view,content_create_update_view,content_delete_view,manage_module_content_list,course_list_view,public_course_detail,course_enroll_view,student_course_detail_view,student_course_list_view,manage_course_preview,course_un_enroll_view,module_order,content_order
 
 urlpatterns = [
     path('manage/course/list/<str:subject>/',manage_course_view,name='manage_course_list'),
@@ -28,4 +28,7 @@ urlpatterns = [
     path('enrolled/course/<course_id>/',student_course_detail_view,name='student_course_detail'),
     path('enrolled/course/<course_id>/<module_id>/',student_course_detail_view,name='student_course_detail_module'),
     path('unenroll/<int:course_id>/',course_un_enroll_view,name='student_unenroll_course'),
+    path('module/order/',module_order,name='module_order'),
+    path('content/order/',content_order,name='content_order'),
+
 ]
