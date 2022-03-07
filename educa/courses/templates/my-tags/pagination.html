@@ -1,0 +1,42 @@
+{%if total_pages > 1 %}
+<nav class="mt-5">
+    <ul class="pagination justify-content-center">
+      <li class="page-item {%if page_number == 1 %}disabled{%endif%}">
+        <a class="page-link" 
+          {%if subject%}
+            href="{%url 'course_list_subject_page' subject.slug page_number|dec_one %}"
+          {%else%}
+            href="{%url 'course_list_page' page_number|dec_one %}"
+          {%endif%} 
+          aria-label="Previous">
+          <span aria-hidden="true">&laquo;</span>
+        </a>
+      </li>
+      {% for page in total_pages|page_number_list %}
+        {% if page != None %}
+        <li class="page-item">
+          <a class="page-link"
+          {%if subject%}
+            href="{%url 'course_list_subject_page' subject.slug page %}"
+          {%else%}
+            href="{%url 'course_list_page' page %}"
+          {%endif%}>{{page}}</a>
+        </li> 
+        {%else%}
+          <li class="page-item"><a class="page-link" href="#">...</a></li>
+        {%endif%}
+      {%endfor%}
+      <li class="page-item {%if page_number == total_pages %}disabled{%endif%}">
+        <a class="page-link" 
+          {%if subject%}
+            href="{%url 'course_list_subject_page' subject.slug page_number|inc_one %}"
+          {%else%}
+            href="{%url 'course_list_page' page_number|inc_one %}"
+          {%endif%}  
+          aria-label="Next">
+          <span aria-hidden="true">&raquo;</span>
+        </a>
+      </li>
+    </ul>
+  </nav>    
+{%endif%}

@@ -67,7 +67,7 @@ class OwnerCourseMixin(OwnerMixin,SubjectQSMixin,LoginRequiredMixin,PermissionRe
 class ManageCourseView(OwnerCourseMixin,View):
     permission_required = 'courses.view_course'
     all_subjects = Subject.objects.all()
-    page_size = 2
+    page_size = 5
 
     def get(self,request,subject=None,*args,**kwargs):
         if subject.lower() not in (None,'all'):
@@ -345,7 +345,7 @@ manage_module_content_list = ManageModuleContentList.as_view()
 #public views
 class CourseListView(View):
     template_name = 'courses/list.html'
-    page_size = 2
+    page_size = 5
     
     def get(self,request,subject=None, *args, **kwargs):
         
@@ -415,7 +415,7 @@ student_course_detail_view = StudentCourseDetailView.as_view()
 
 class StudentCourseListView(View,LoginRequiredMixin):
     template_name = 'students/course/list.html'
-    page_size = 2
+    page_size = 5
 
     def get(self,request,*args,**kwargs):
         courses = Course.objects.filter(students__in=[request.user])
