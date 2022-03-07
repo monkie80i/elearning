@@ -142,3 +142,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
         'LOCATION': '127.0.0.1:11211',
     }
 }"""
+
+
+LOGOUT_REDIRECT_URL = 'course_list'
