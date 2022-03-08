@@ -344,12 +344,36 @@ class ManageModuleContentList(View,LoginRequiredMixin):
 manage_module_content_list = ManageModuleContentList.as_view()
 
 #public views
-class CourseListView(View):
+
+class PaginateMixin(object):
+    page_size = 3
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.page_number = 1
+        if 'page_number' in self.kwargs:
+            print('has page number')
+            self.page_number = self.kwargs['page_number']
+        return super().dispatch(request, *args, **kwargs)
+    
+
+    def paginate(self,qs):
+        """Thake s queryset or an list ,
+        page_size is the number of item in one page,
+        page_number starts from 1 to length of qs/page_size
+        """
+        start = (self.page_number-1)*self.page_size
+        end = self.page_number*self.page_size
+        return qs[start:end] 
+
+    def get_total_pages(self,qs):
+        return math.ceil(qs.count()/self.page_size)
+
+
+class CourseListView(PaginateMixin,View):
     template_name = 'courses/list.html'
     page_size = 5
-    
+
     def get(self,request,subject=None, *args, **kwargs):
-        
         subjects = Subject.objects.annotate(total_courses = Count('courses'))
         courses = Course.objects.annotate(total_modules=Count('modules'))
         if subject:
@@ -359,13 +383,15 @@ class CourseListView(View):
             'all_subjects':subjects,
             'subject':subject
         }
-        page_number = 1
-        total_pages = math.ceil(courses.count()/self.page_size)
-        if 'page_number' in self.kwargs:
-            page_number = self.kwargs['page_number']
-        courses = paginate(courses,self.page_size,page_number)
+        #page_number = 1
+        #total_pages = math.ceil(courses.count()/self.page_size)
+        total_pages = self.get_total_pages(courses)
+        #if 'page_number' in self.kwargs:
+        #    page_number = self.kwargs['page_number']
+        #courses = paginate(courses,self.page_size,page_number)
+        courses = self.paginate(courses)
         context_obj['courses'] = courses
-        context_obj['page_number'] = page_number
+        context_obj['page_number'] = self.page_number
         context_obj['total_pages'] = total_pages
         #print(context_obj)
         return render(request,self.template_name,context_obj)
