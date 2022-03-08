@@ -1,42 +1,24 @@
-{%if total_pages > 1 %}
+{% if total_pages != 1%}
 <nav class="mt-5">
     <ul class="pagination justify-content-center">
       <li class="page-item {%if page_number == 1 %}disabled{%endif%}">
-        <a class="page-link" 
-          {%if subject%}
-            href="{%url 'course_list_subject_page' subject.slug page_number|dec_one %}"
-          {%else%}
-            href="{%url 'course_list_page' page_number|dec_one %}"
-          {%endif%} 
+        <a class="page-link"  
+            href="{{ prev_page }}"
           aria-label="Previous">
           <span aria-hidden="true">&laquo;</span>
         </a>
       </li>
-      {% for page in total_pages|page_number_list %}
-        {% if page != None %}
+      {% for page in page_number_list %}
         <li class="page-item">
           <a class="page-link"
-          {%if subject%}
-            href="{%url 'course_list_subject_page' subject.slug page %}"
-          {%else%}
-            href="{%url 'course_list_page' page %}"
-          {%endif%}>{{page}}</a>
+            href="{{pagination_url}}{{page}}/">{{page}}</a>
         </li> 
-        {%else%}
-          <li class="page-item"><a class="page-link" href="#">...</a></li>
-        {%endif%}
-      {%endfor%}
+      {%endfor%}  
       <li class="page-item {%if page_number == total_pages %}disabled{%endif%}">
-        <a class="page-link" 
-          {%if subject%}
-            href="{%url 'course_list_subject_page' subject.slug page_number|inc_one %}"
-          {%else%}
-            href="{%url 'course_list_page' page_number|inc_one %}"
-          {%endif%}  
-          aria-label="Next">
+        <a class="page-link" href="{{ next_page }}" aria-label="Next">
           <span aria-hidden="true">&raquo;</span>
         </a>
       </li>
     </ul>
   </nav>    
-{%endif%}
+  {%endif%}

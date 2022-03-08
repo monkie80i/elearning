@@ -346,12 +346,16 @@ manage_module_content_list = ManageModuleContentList.as_view()
 #public views
 
 class PaginateMixin(object):
+    """helps in pagination
+        requires a url of the same with extra 'page_number' arg.
+
+    """
+
     page_size = 3
     
     def dispatch(self, request, *args, **kwargs):
         self.page_number = 1
         if 'page_number' in self.kwargs:
-            print('has page number')
             self.page_number = self.kwargs['page_number']
         return super().dispatch(request, *args, **kwargs)
     
@@ -366,6 +370,7 @@ class PaginateMixin(object):
         return qs[start:end] 
 
     def get_total_pages(self,qs):
+        """gets the total number of pages"""
         return math.ceil(qs.count()/self.page_size)
 
 
@@ -379,16 +384,15 @@ class CourseListView(PaginateMixin,View):
         if subject:
             subject = get_object_or_404(Subject,slug=subject)
             courses = courses.filter(subject=subject)
+            pagination_url = reverse_lazy('course_list_subject',args=[subject.slug])
+        else:
+            pagination_url = reverse_lazy('course_list')
         context_obj = {
             'all_subjects':subjects,
-            'subject':subject
+            'subject':subject,
+            'pagination_url':pagination_url
         }
-        #page_number = 1
-        #total_pages = math.ceil(courses.count()/self.page_size)
         total_pages = self.get_total_pages(courses)
-        #if 'page_number' in self.kwargs:
-        #    page_number = self.kwargs['page_number']
-        #courses = paginate(courses,self.page_size,page_number)
         courses = self.paginate(courses)
         context_obj['courses'] = courses
         context_obj['page_number'] = self.page_number

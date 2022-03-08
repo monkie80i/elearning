@@ -1,6 +1,8 @@
 {% extends 'courses/public_base.html'%}
 
 {% load course %}
+{% load pagination %}
+
 
 {% block title %}Course List{% endblock %}
 
@@ -49,7 +51,7 @@
             </div>
             {%endfor%}
         </div>
-        
+        <!--
         {%if total_pages > 1 %}
         <nav class="mt-5">
           <ul class="pagination justify-content-center">
@@ -91,7 +93,12 @@
             </li>
           </ul>
         </nav>
-        {%endif%}
+        {%endif%}-->
+
+        {% pagination_tag total_pages page_number pagination_url%}
+        {{total_pages}}{{ page_number}} {{pagination_url}}
+
+        {% test_cat %}
         
     </div>              
 </div>
