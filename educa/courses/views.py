@@ -30,7 +30,7 @@ from .widgets import MyFileInput
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 
-###helpers
+#helpers
 
 def is_add_another(request):
     return 'add' in request.POST.dict()
@@ -46,6 +46,10 @@ def paginate(qs,page_size,page_number):
     return qs[start:end]
 
 # Create your views here.
+
+#MIXINS
+
+
 class SubjectQSMixin(object):
     subjects_qs = Subject.objects.all()
     all_subjects = [subject.title for subject in subjects_qs]
@@ -55,7 +59,33 @@ class OwnerMixin(object):
         self.qs = self.model.objects.filter(user=request.user)
         return super().setup(request, *args, **kwargs)
 
+class PaginateMixin(object):
+    """helps in pagination
+        requires a url of the same with extra 'page_number' arg.
 
+    """
+
+    page_size = 3
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.page_number = 1
+        if 'page_number' in self.kwargs:
+            self.page_number = self.kwargs['page_number']
+        return super().dispatch(request, *args, **kwargs)
+    
+
+    def paginate(self,qs):
+        """Thake s queryset or an list ,
+        page_size is the number of item in one page,
+        page_number starts from 1 to length of qs/page_size
+        """
+        start = (self.page_number-1)*self.page_size
+        end = self.page_number*self.page_size
+        return qs[start:end] 
+
+    def get_total_pages(self,qs):
+        """gets the total number of pages"""
+        return math.ceil(qs.count()/self.page_size)
 
 #Course Views
 
@@ -65,7 +95,7 @@ class OwnerCourseMixin(OwnerMixin,SubjectQSMixin,LoginRequiredMixin,PermissionRe
     list_template_name = 'manage/courses/list.html'
     edit_template_name = 'manage/courses/form.html'
 
-class ManageCourseView(OwnerCourseMixin,View):
+class ManageCourseView(OwnerCourseMixin,PaginateMixin,View):
     permission_required = 'courses.view_course'
     all_subjects = Subject.objects.all()
     page_size = 5
@@ -74,21 +104,22 @@ class ManageCourseView(OwnerCourseMixin,View):
         if subject.lower() not in (None,'all'):
             subject = get_object_or_404(self.all_subjects,slug=subject)
             courses = self.qs.filter(subject__title=subject)
+            pagination_url = reverse_lazy('manage_course_list',args=[subject])
         else:   
             courses = self.qs
             subject = None
+            pagination_url = reverse_lazy('manage_course_list',args=['all'])
+
         print(subject)
         context_obj = {
             'subject':subject,
-            'all_subjects': self.all_subjects
+            'all_subjects': self.all_subjects,
+            'pagination_url': pagination_url,
         }
-        page_number = 1
-        total_pages = math.ceil(courses.count()/self.page_size)
-        if 'page_number' in self.kwargs:
-            page_number = self.kwargs['page_number']
-        courses = paginate(courses,self.page_size,page_number)
+        total_pages = self.get_total_pages(courses)
+        courses = self.paginate(courses)
         context_obj['object_lsit'] = courses
-        context_obj['page_number'] = page_number
+        context_obj['page_number'] = self.page_number
         context_obj['total_pages'] = total_pages
         print(context_obj)
         return render(request,self.list_template_name,context_obj)
@@ -345,33 +376,7 @@ manage_module_content_list = ManageModuleContentList.as_view()
 
 #public views
 
-class PaginateMixin(object):
-    """helps in pagination
-        requires a url of the same with extra 'page_number' arg.
 
-    """
-
-    page_size = 3
-    
-    def dispatch(self, request, *args, **kwargs):
-        self.page_number = 1
-        if 'page_number' in self.kwargs:
-            self.page_number = self.kwargs['page_number']
-        return super().dispatch(request, *args, **kwargs)
-    
-
-    def paginate(self,qs):
-        """Thake s queryset or an list ,
-        page_size is the number of item in one page,
-        page_number starts from 1 to length of qs/page_size
-        """
-        start = (self.page_number-1)*self.page_size
-        end = self.page_number*self.page_size
-        return qs[start:end] 
-
-    def get_total_pages(self,qs):
-        """gets the total number of pages"""
-        return math.ceil(qs.count()/self.page_size)
 
 
 class CourseListView(PaginateMixin,View):
@@ -444,22 +449,22 @@ class StudentCourseDetailView(View,LoginRequiredMixin):
 
 student_course_detail_view = StudentCourseDetailView.as_view()
 
-class StudentCourseListView(View,LoginRequiredMixin):
+class StudentCourseListView(PaginateMixin,View,LoginRequiredMixin):
     template_name = 'students/course/list.html'
     page_size = 5
 
     def get(self,request,*args,**kwargs):
         courses = Course.objects.filter(students__in=[request.user])
-        page_number = 1
-        context_obj = {}
-        total_pages = math.ceil(courses.count()/self.page_size)
-        if 'page_number' in self.kwargs:
-            page_number = self.kwargs['page_number']
-        courses = paginate(courses,self.page_size,page_number)
+        pagination_url = reverse_lazy('student_course_list')
+        context_obj = {
+            'pagination_url':pagination_url
+        }
+        total_pages = self.get_total_pages(courses)
+        courses = self.paginate(courses)
         context_obj['courses'] = courses
-        context_obj['page_number'] = page_number
+        context_obj['page_number'] = self.page_number
         context_obj['total_pages'] = total_pages
-        print(context_obj)
+        #print(context_obj)
         return render(request,self.template_name,context_obj)
 
 student_course_list_view = StudentCourseListView.as_view()

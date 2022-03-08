@@ -1,6 +1,7 @@
 {% extends 'accounts/home.html'%}
 
 {%load course%}
+{%load pagination%}
 
 {% block title %}Course List{% endblock %}
 
@@ -52,8 +53,8 @@
             </div>
             {%endfor%}
         </div>
-        
-        {%if total_pages > 1 %}
+        {% pagination_tag total_pages page_number pagination_url%}
+        <!--{%if total_pages > 1 %}
         <nav class="mt-5">
           <ul class="pagination justify-content-center">
             <li class="page-item {%if page_number == 1 %}disabled{%endif%}">
@@ -94,7 +95,7 @@
             </li>
           </ul>
         </nav>
-        {%endif%}
+        {%endif%}-->
     </div>              
 </div>
 {%endblock%}
