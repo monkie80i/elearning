@@ -96,3 +96,15 @@ class UserRegistrationView(View):
         return render(request,self.template_name,{'form':self.form_class,'error':error})
 
 user_registration_view = UserRegistrationView.as_view()
+
+
+class UserProfileView(View,LoginRequiredMixin):
+    template_name = 'accounts/profile.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get(self, request, *args, **kwargs):
+        return render(request,self.template_name)
+
+user_profile_view = UserProfileView.as_view()
