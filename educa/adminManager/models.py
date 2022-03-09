@@ -25,3 +25,9 @@ class Profile(models.Model):
 
     def visible_on_profile_fields(self):
         pass
+
+    def __str__(self):
+        if self.user is not None:
+            return self.user.username
+        else:
+            return super().__str__()

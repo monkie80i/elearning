@@ -11689,6 +11689,27 @@ textarea.form-control-lg {
   border-top: 1px solid #23CE6B;
 }
 
+.profile-card {
+  width: 100%;
+  margin: 1rem 0 1rem 0;
+  overflow-wrap: break-word;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 0.5rem;
+}
+.profile-pic {
+  margin: 0 auto;
+  width: 10rem;
+  height: 10rem;
+}
+.profile-pic img {
+  width: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(35, 206, 107, 0.5);
+}
+
 .form-container {
   padding-top: 3rem;
   padding-left: 3rem;

@@ -1,10 +1,9 @@
 from django.contrib.auth.models import Group
 from re import template
-from django.shortcuts import render,redirect
-
+from django.shortcuts import render,redirect,get_object_or_404
 from courses.models import Course
 from .models import User
-from .forms import UserForm
+from .forms import UserForm,UserProfileEditForm
 from django.http import HttpResponseRedirect,HttpResponse
 from django.views import View
 import copy,traceback,sys
@@ -98,13 +97,43 @@ class UserRegistrationView(View):
 user_registration_view = UserRegistrationView.as_view()
 
 
-class UserProfileView(View,LoginRequiredMixin):
-    template_name = 'accounts/profile.html'
+class UserProfilePrivateView(View,LoginRequiredMixin):
+    template_name = 'accounts/form.html'
+    form_class = UserProfileEditForm
     
     def dispatch(self, request, *args, **kwargs):
+        self.user = get_object_or_404(User,id=request.user.id)
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, *args, **kwargs):
-        return render(request,self.template_name)
+        
+        form_data = {
+            'first_name':self.user.first_name,
+            'last_name':self.user.last_name,
+            'pic':self.user.profile.pic,
+            'dob':self.user.profile.dob,
+            'professional_title':self.user.profile.professional_title
+        }
+        form = self.form_class(initial=form_data)
+        context ={
+            'user':self.user,
+            'form':form
+        }
+        return render(request,self.template_name,context)
+    
+    def post(self,request,*args, **kwargs):
+        print("here")
+        form = self.form_class(request.POST or None,request.FILES)
+        if form.is_valid():
+            cd = form.cleaned_data
+            print(cd)
+            self.user.first_name = cd['first_name']
+            self.user.last_name = cd['last_name']
+            self.user.profile.dob = cd['dob']
+            self.user.profile.pic = cd['pic']
+            self.user.profile.professional_title = cd['professional_title']
+            self.user.save()
+            self.user.profile.save()
+        return redirect('user_profile_private')
 
-user_profile_view = UserProfileView.as_view()
+user_profile_private_view = UserProfilePrivateView.as_view()
