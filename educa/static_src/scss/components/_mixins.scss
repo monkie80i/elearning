@@ -43,3 +43,25 @@
     left: 50%;
     transform: translate(-50%,-50%);
 }
+
+
+@mixin social-button {
+    position: relative;
+    text-decoration: none;
+    display: inline-block;
+    border-radius: 50%;
+    height: 3rem;
+    width: 3rem;
+    transition: .2s linear ;
+    margin: 0 .3rem;
+    box-shadow: 0 .125rem .25rem rgba($black, .075);;
+
+    i {
+        @include absolute-center;
+        color: $white;
+    }
+
+    &:hover {
+        transform: scale(1.1);
+    }
+}

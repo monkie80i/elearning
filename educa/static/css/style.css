@@ -11219,6 +11219,73 @@ textarea.form-control-lg {
   font-size: 1.2rem;
 }
 
+.btn-social-facebook {
+  position: relative;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 50%;
+  height: 3rem;
+  width: 3rem;
+  transition: 0.2s linear;
+  margin: 0 0.3rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  background-color: #4267B2;
+}
+.btn-social-facebook i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+}
+.btn-social-facebook:hover {
+  transform: scale(1.1);
+}
+.btn-social-google {
+  position: relative;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 50%;
+  height: 3rem;
+  width: 3rem;
+  transition: 0.2s linear;
+  margin: 0 0.3rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  background-color: #DB4437;
+}
+.btn-social-google i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+}
+.btn-social-google:hover {
+  transform: scale(1.1);
+}
+.btn-social-apple {
+  position: relative;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 50%;
+  height: 3rem;
+  width: 3rem;
+  transition: 0.2s linear;
+  margin: 0 0.3rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  background-color: black;
+}
+.btn-social-apple i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+}
+.btn-social-apple:hover {
+  transform: scale(1.1);
+}
+
 .navbar-nav .nav-item .nav-link {
   font-size: larger;
   color: #fff !important;
@@ -11591,6 +11658,35 @@ textarea.form-control-lg {
     padding-bottom: 3rem;
     border-bottom: 1px solid #23CE6B;
   }
+}
+
+.login-form-container {
+  margin: 2rem 0;
+}
+.login-form-container form {
+  padding: 2rem 4rem;
+}
+@media (max-width: 575.98px) {
+  .login-form-container form {
+    padding: 0 1rem;
+  }
+}
+.login-form-left {
+  border-right: 1px solid #23CE6B;
+}
+@media (max-width: 767.98px) {
+  .login-form-left {
+    border-right: none;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid #23CE6B;
+  }
+}
+.login-form-hr {
+  max-width: 80%;
+  margin: auto;
+  background-color: inherit;
+  opacity: 100%;
+  border-top: 1px solid #23CE6B;
 }
 
 .form-container {

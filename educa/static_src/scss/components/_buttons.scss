@@ -32,3 +32,23 @@
 
 }
 
+.btn-social {
+    
+    
+    &-facebook {
+        @include social-button;
+        background-color: #4267B2;
+    }
+
+    &-google {
+        @include social-button;
+        background-color: #DB4437;
+    }
+
+    &-apple {
+        @include social-button;
+        background-color: black;
+    }
+
+    
+}

@@ -270,6 +270,42 @@
     
     
 }
+.login-form{
+    &-container{
+
+        margin: 2rem 0;
+        
+        form {
+
+            padding:2rem 4rem;
+
+            @include media-breakpoint-down(sm){
+                padding: 0 1rem;
+            }
+        }
+    }
+
+    &-left {
+        border-right: 1px solid $primary;
+
+        @include media-breakpoint-down(md){
+            border-right:none;
+            padding-bottom: 3rem;
+            border-bottom: 1px solid $primary;
+        }
+    
+    }
+    
+    
+    &-hr{
+        max-width: 80%;
+        margin: auto;
+        background-color: inherit;
+        opacity: 100%;
+        border-top: 1px solid $primary;
+
+    }
+}
 
 .form-container{
     padding-top: 3rem;
