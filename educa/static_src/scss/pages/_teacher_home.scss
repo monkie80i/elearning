@@ -307,6 +307,31 @@
     }
 }
 
+.profile {
+
+    &-card {
+        width: 100%;
+        margin: 1rem 0 1rem 0 ;
+        overflow-wrap: break-word;
+        box-shadow: $box-shadow;
+        padding: 1.5rem;
+        text-align: center;
+        border-radius: .5rem;
+    }
+
+    &-pic {
+        margin: 0 auto;
+        width: 10rem;
+        height: 10rem;
+        img {
+            width:100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid rgba($primary,50%);
+        }
+    }
+}
+
 .form-container{
     padding-top: 3rem;
     padding-left: 3rem;
