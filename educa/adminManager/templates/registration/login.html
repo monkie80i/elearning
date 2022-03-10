@@ -3,15 +3,7 @@
 {% block title %}Log-in{% endblock %}
 
 {% block nav_items %}
-    {% if request.user.is_authenticated %}
-        <li class="nav-item">
-            <a class="nav-link" href="{%url 'logout'%}">logout</a>
-        </li>
-    {%else%}
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'user_registration' 'teacher' %}">register</a>
-        </li>
-    {%endif%}
+    
 {% endblock %}
 
 {% block content %}
