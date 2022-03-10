@@ -4,7 +4,7 @@ from tkinter import Widget
 from tokenize import blank_re
 from .models import User,Profile
 from django import forms
-from courses.widgets import MyFileInput
+from utils.widgets import MyFileInput
 
 class UserForm(forms.ModelForm):
     password_1 = forms.CharField(max_length=100,label='Enter Passowrd',required=True,widget=forms.PasswordInput)

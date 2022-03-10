@@ -26,7 +26,7 @@ from django.forms.models import modelform_factory
 from django.forms import Form
 from django.db.models import Count
 from django import forms
-from .widgets import MyFileInput
+from utils.widgets import MyFileInput
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.templatetags.static import static   
