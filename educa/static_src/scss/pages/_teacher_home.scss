@@ -329,6 +329,18 @@
             object-fit: cover;
             border: 1px solid rgba($primary,50%);
         }
+
+        &-sm{
+            display: inline-block;
+            width: 3rem;
+            height: 3rem;
+            img {
+                width:100%;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 1px solid rgba($primary,50%);
+            }
+        }
     }
 }
 

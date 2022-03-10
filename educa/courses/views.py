@@ -29,6 +29,7 @@ from django import forms
 from .widgets import MyFileInput
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
+from django.templatetags.static import static   
 
 #helpers
 
@@ -395,7 +396,8 @@ class CourseListView(PaginateMixin,View):
         context_obj = {
             'all_subjects':subjects,
             'subject':subject,
-            'pagination_url':pagination_url
+            'pagination_url':pagination_url,
+            'default_user_image':static('images/default-user-image.png')
         }
         total_pages = self.get_total_pages(courses)
         courses = self.paginate(courses)

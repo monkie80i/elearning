@@ -11709,6 +11709,17 @@ textarea.form-control-lg {
   object-fit: cover;
   border: 1px solid rgba(35, 206, 107, 0.5);
 }
+.profile-pic-sm {
+  display: inline-block;
+  width: 3rem;
+  height: 3rem;
+}
+.profile-pic-sm img {
+  width: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(35, 206, 107, 0.5);
+}
 
 .form-container {
   padding-top: 3rem;

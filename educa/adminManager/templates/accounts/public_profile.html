@@ -1,0 +1,78 @@
+{% extends 'accounts/home.html'%}
+
+{% load pagination %}
+
+{% block title %}Profile{% endblock %}
+
+{% block sidenav_links%}
+<li class="nav-item">
+    <a class="nav-link"href="{%url 'course_list' %}">All Courses</a>
+</li>
+{%if request.user.is_student %}
+    <li class="nav-item">
+        <a class="nav-link" href="{%url 'student_course_list' %}">Enrolled Courses</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="#">Saved Courses</a>
+    </li>
+{%endif%}
+{% if request.user.is_teacher %}
+    <li class="nav-item">
+        <a class="nav-link" href="{%url 'manage_course_list' 'all' %}">My Courses</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{%url 'course_create'  %}">Create Course</a>
+    </li>
+{% endif %}
+{%endblock%}
+
+{%block main_content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="profile-card">
+                <div class="profile-pic mb-4">
+                    <img {% if user_obj.profile.pic.url %}
+                    src="{{user_obj.profile.pic.url}}" 
+                    {%else%}
+                    src="{{default_user_image}}" 
+                    {% endif %}
+                     alt="">
+                </div>
+                <h2 class="fw-light">@{{user_obj.username}}</h2>
+                <h5 class="">{{user_obj.fullname}}</h5>
+                <p class="fw-light mb-0">{{user_obj.email}}</p>
+                {% if user_obj.is_teacher%}
+                <p class="fw-light mb-0">8 courses</p>
+                {%else%}
+                <p class="fw-light mb-0">8 courses enrolled</p>
+                {%endif%}
+            </div>
+        </div>
+        <div class="col-md-9">
+            {% if user_obj.is_teacher %}
+            <div class="course-list p-2">
+                {%for course in courses %}
+                <div class="course-item border-0 shadow p-4 rounded" id="course-{{course.id}}">
+                    <h2 >{{course.title}}</h2>
+                    <p class="lead ">{{course.modules.count}} modules</p>
+                    <p>{{course.overview}}</p>
+                    <a href="{%url 'public_course_detail' course.id %}" type="button" class="btn btn-primary-solid ">View</a>
+                </div>
+                {%empty%}
+                <div class="alert alert-info" role="alert">
+                    NO Courses yet
+                </div>
+                {%endfor%}
+            </div>
+            {% pagination_tag total_pages page_number pagination_url%}
+            {%endif%}
+        </div>
+    </div>
+</div>
+
+{%endblock%}
+
+{% block domready%}
+   
+{%endblock%}

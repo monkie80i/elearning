@@ -32,3 +32,10 @@ def page_number_list(total_pages):
         #print(e)
         return None
     
+@register.filter
+def course_user_id(course):
+    try:
+        return course.user.id
+    except Exception as e:
+        #print(e)
+        return 1

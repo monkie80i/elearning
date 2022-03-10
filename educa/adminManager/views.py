@@ -4,13 +4,16 @@ from django.shortcuts import render,redirect,get_object_or_404
 from courses.models import Course
 from .models import User
 from .forms import UserForm,UserProfileEditForm
-from django.http import HttpResponseRedirect,HttpResponse
+from django.http import HttpResponseRedirect,HttpResponse,Http404
 from django.views import View
 import copy,traceback,sys
 from django.urls import reverse,reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.mixins import LoginRequiredMixin,PermissionRequiredMixin
+from courses.views import PaginateMixin
+from django.templatetags.static import static   
+
 # Create your views here.
 
 
@@ -137,3 +140,30 @@ class UserProfilePrivateView(View,LoginRequiredMixin):
         return redirect('user_profile_private')
 
 user_profile_private_view = UserProfilePrivateView.as_view()
+
+class ProfilePublicView(PaginateMixin,View,LoginRequiredMixin):
+    template_name = 'accounts/public_profile.html'
+    page_size = 5
+
+    def get(self,request,user_id, *args, **kwargs):
+        if user_id:
+            user_obj = get_object_or_404(User,id=user_id)
+        else:
+            raise Http404("No User Id in the parameters")
+        courses = user_obj.courses.all()
+        print(user_obj,courses)
+        pagination_url = reverse_lazy('user_profile_public',args=[user_id])
+        context_obj = {
+            'pagination_url':pagination_url,
+            'user_obj':user_obj,
+            'default_user_image':static('images/default-user-image.png')
+        }
+        total_pages = self.get_total_pages(courses)
+        courses = self.paginate(courses)
+        context_obj['courses'] = courses
+        context_obj['page_number'] = self.page_number
+        context_obj['total_pages'] = total_pages
+        #print(context_obj)
+        return render(request,self.template_name,context_obj)
+
+profile_public_view = ProfilePublicView.as_view()

@@ -38,9 +38,20 @@
         </nav>
         <div class="course-list">
             {%for course in courses %}
-            <div class="course-item" id="course-{{course.id}}">
+            <div class="course-item border-0 shadow p-4 rounded" id="course-{{course.id}}">
                 <h1 style="text-decoration: none;">{{course.title}}</h1>
-                <p class="lead m-0 p0"><b>Instructor: </b>{{course.user.username}}</p>
+                <a href="{%url 'user_profile_public' course|course_user_id %}" style="text-decoration: none;color: inherit;">
+                    <div>
+                      <div class="profile-pic-sm">
+                        <img {% if course.user.profile.pic.url %}
+                        src="{{course.user.profile.pic.url}}" 
+                        {%else%}
+                        src="{{default_user_image}}" 
+                        {% endif %} alt="">
+                      </div>
+                      <p class="d-inline-block m-sm-2">{%if course.user.fullname %}{{course.user.fullname}}{%else%}@{{course.user.username}}{%endif%}</p>
+                    </div>
+                  </a>
                 <p class="lead ">{{course.modules.count}} modules</p>
                 <p>{{course.overview}}</p>
                 <a href="{%url 'public_course_detail' course.id %}" type="button" class="btn btn-primary-solid ">View</a>
