@@ -386,7 +386,7 @@ class CourseListView(PaginateMixin,View):
 
     def get(self,request,subject=None, *args, **kwargs):
         subjects = Subject.objects.annotate(total_courses = Count('courses'))
-        courses = Course.objects.annotate(total_modules=Count('modules'))
+        courses = Course.objects.all().order_by('-updated').annotate(total_modules=Count('modules'))
         if subject:
             subject = get_object_or_404(Subject,slug=subject)
             courses = courses.filter(subject=subject)
