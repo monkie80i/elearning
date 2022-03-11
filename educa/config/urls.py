@@ -25,8 +25,8 @@ from django.views.generic import TemplateView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('superadmin/',admin_site.urls),
-    path('',include('adminManager.urls')),
-    path('',include('courses.urls')), 
+    #path('',include('adminManager.urls')),
+    #path('',include('courses.urls')), 
     path('webpack-test/',TemplateView.as_view(template_name='test.html')),
 ]
 
