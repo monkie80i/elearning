@@ -15,9 +15,12 @@
   <li class="nav-item">
     <a class="nav-link" href="{%url 'manage_course_list' 'all' %}">My Courses</a>
   </li>
+  
+  {%if object %}
   <li class="nav-item">
     <a class="nav-link" href="{%url 'manage_course_detail' object.id %}">Back</a>
   </li>
+  {% endif %}
 {%endblock%}
 
 {%block form_top_content %}
