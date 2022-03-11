@@ -29,8 +29,6 @@ class UserForm(forms.ModelForm):
         for visible in self.visible_fields():
             visible.field.widget.attrs['class'] = 'form-control border-primary'
             visible.field.required = True
-        for hidden in self.hidden_fields():
-            hidden.field.required = True
 
 class UserProfileEditForm(forms.Form):
     first_name = forms.CharField(max_length=100)
