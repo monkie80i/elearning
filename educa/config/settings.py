@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     #local
     'utils',
     'adminManager',
-    #'courses',
+    'courses',
     #third party
     'embed_video',
 ]
