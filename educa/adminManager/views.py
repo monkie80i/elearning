@@ -2,7 +2,7 @@ from django.contrib.auth.models import Group
 from re import template
 from django.shortcuts import render,redirect,get_object_or_404
 from courses.models import Course
-from .models import User
+from .models import Profile, User
 from .forms import UserForm,UserProfileEditForm
 from django.http import HttpResponseRedirect,HttpResponse,Http404
 from django.views import View
@@ -76,6 +76,8 @@ class UserRegistrationView(View):
                     password = copy.deepcopy(cd["password_1"])
                     instance.set_password(password)
                     instance.save()
+                    profile = Profile(user=instance)
+                    profile.save()
                     group = Group.objects.get(name=user_type)
                     group.user_set.add(instance)
                     #print(instance.username,password)
