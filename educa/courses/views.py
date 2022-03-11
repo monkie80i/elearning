@@ -5,8 +5,7 @@ import imp
 from mimetypes import init
 from multiprocessing import context
 from tempfile import template
-from tkinter import Image
-from typing import Reversible
+
 from django.shortcuts import render,redirect
 from django.views import View
 from .models import Subject,Course,Module,Content
