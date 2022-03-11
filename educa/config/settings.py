@@ -39,9 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     #local
-    #'utils',
+    'utils',
     'adminManager',
-    #'courses',
+    'courses',
     #third party
     'embed_video',
 ]
