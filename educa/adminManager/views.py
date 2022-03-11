@@ -11,7 +11,7 @@ from django.urls import reverse,reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.mixins import LoginRequiredMixin,PermissionRequiredMixin
-from courses.views import PaginateMixin
+#from courses.views import PaginateMixin
 from django.templatetags.static import static   
 
 # Create your views here.
@@ -143,7 +143,8 @@ class UserProfilePrivateView(View,LoginRequiredMixin):
 
 user_profile_private_view = UserProfilePrivateView.as_view()
 
-class ProfilePublicView(PaginateMixin,View,LoginRequiredMixin):
+#class ProfilePublicView(PaginateMixin,View,LoginRequiredMixin):
+class ProfilePublicView(View,LoginRequiredMixin):
     template_name = 'accounts/public_profile.html'
     page_size = 5
 
