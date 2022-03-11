@@ -8,11 +8,13 @@ class CourseForm(forms.ModelForm):
         fields = [
             'subject','title','overview'
         ]
+        
     
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
         for visible in self.visible_fields():
             visible.field.widget.attrs['class'] = 'form-control border-primary'
+            visible.field.required = True
         
 class ModuleForm(forms.ModelForm):
     class Meta:
@@ -24,6 +26,7 @@ class ModuleForm(forms.ModelForm):
         super().__init__(*args,**kwargs)
         for visible in self.visible_fields():
             visible.field.widget.attrs['class'] = 'form-control border-primary'
+            visible.field.required = True
         #self.set_required()
 
 class CourseEnrollForm(forms.Form):

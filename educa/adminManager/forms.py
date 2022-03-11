@@ -30,7 +30,9 @@ class UserForm(forms.ModelForm):
         super().__init__(*args,**kwargs)
         for visible in self.visible_fields():
             visible.field.widget.attrs['class'] = 'form-control border-primary'
-
+            visible.field.required = True
+        for hidden in self.hidden_fields():
+            hidden.field.required = True
 
 class UserProfileEditForm(forms.Form):
     first_name = forms.CharField(max_length=100)
@@ -44,6 +46,7 @@ class UserProfileEditForm(forms.Form):
         super().__init__(*args,**kwargs)
         for visible in self.visible_fields():
             visible.field.widget.attrs['class'] = 'form-control border-primary'
+            visible.field.required = True
     
     def save(self,user_object):
         try:

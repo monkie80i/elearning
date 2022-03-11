@@ -100,7 +100,14 @@ class CourseViewsTestCase(TestCase):
         response = self.s_client.get(reverse_lazy('manage_course_list',args=['all']))
         self.assertEqual(response.status_code,200)
     
-
+    def test_blank_course_create_form(self):
+        data = {
+        }
+        response = self.t_client.post(reverse_lazy('course_create'),data)
+        c = Course.objects.latest('created')
+        print(c)
+        #self.assertEqual(c.title,data['title'])
+        #self.assertEqual(response.status_code,302)
 
 class ModuleCreateUpdateTestCase(TestCase):
     def setUp(self):
