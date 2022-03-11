@@ -1,7 +1,7 @@
 from django.contrib.auth.models import Group
 from re import template
 from django.shortcuts import render,redirect,get_object_or_404
-#from courses.models import Course
+from courses.models import Course
 from .models import Profile, User
 from .forms import UserForm,UserProfileEditForm
 from django.http import HttpResponseRedirect,HttpResponse,Http404
@@ -25,14 +25,14 @@ class UserHomeView(View,LoginRequiredMixin):
         max_courses = 5
         self.user = request.user
         if self.user.is_teacher:
-            #courses = Course.objects.filter(user = request.user)[:max_courses]
+            courses = Course.objects.filter(user = request.user)[:max_courses]
             self.context_object = {
                 'courses':courses,
                 'user':self.user
             }
             self.template_name = 'accounts/teacher_home.html'
         if self.user.is_student:
-            #courses = Course.objects.filter(students=self.user)[:max_courses]
+            courses = Course.objects.filter(students=self.user)[:max_courses]
             self.context_object = {
                 'courses':courses,
                 'user':self.user
