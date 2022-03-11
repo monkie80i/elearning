@@ -1,7 +1,7 @@
 from django.contrib.auth.models import Group
 from re import template
 from django.shortcuts import render,redirect,get_object_or_404
-#from courses.models import Course
+from courses.models import Course
 from .models import Profile, User
 from .forms import UserForm,UserProfileEditForm
 from django.http import HttpResponseRedirect,HttpResponse,Http404
@@ -11,7 +11,7 @@ from django.urls import reverse,reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.mixins import LoginRequiredMixin,PermissionRequiredMixin
-#from courses.views import PaginateMixin
+from courses.views import PaginateMixin
 from django.templatetags.static import static   
 
 # Create your views here.
@@ -25,14 +25,14 @@ class UserHomeView(View,LoginRequiredMixin):
         max_courses = 5
         self.user = request.user
         if self.user.is_teacher:
-            #courses = Course.objects.filter(user = request.user)[:max_courses]
+            courses = Course.objects.filter(user = request.user)[:max_courses]
             self.context_object = {
                 'courses':courses,
                 'user':self.user
             }
             self.template_name = 'accounts/teacher_home.html'
         if self.user.is_student:
-            #courses = Course.objects.filter(students=self.user)[:max_courses]
+            courses = Course.objects.filter(students=self.user)[:max_courses]
             self.context_object = {
                 'courses':courses,
                 'user':self.user
@@ -143,9 +143,8 @@ class UserProfilePrivateView(View,LoginRequiredMixin):
 
 user_profile_private_view = UserProfilePrivateView.as_view()
 
-#class ProfilePublicView(PaginateMixin,View,LoginRequiredMixin):
+class ProfilePublicView(PaginateMixin,View,LoginRequiredMixin):
 
-class ProfilePublicView(View,LoginRequiredMixin):
     template_name = 'accounts/public_profile.html'
     page_size = 5
 
