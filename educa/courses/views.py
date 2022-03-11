@@ -292,6 +292,7 @@ class ContentCreateUpdateView(View,LoginRequiredMixin):
         base_fields = Form.base_fields
         for fields in base_fields.values():
             fields.widget.attrs['class']='form-control border-primary'
+            fields.required = True
         
         return Form(*args,**kwargs)
 
