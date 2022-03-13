@@ -53,7 +53,7 @@
             <div class="profile-card">
                 <div class="profile-pic mb-4">
                     <img 
-                    {% if user.profile.pic.url %}
+                    {% if user.profile.pic %}
                     src="{{user.profile.pic.url}}" 
                     {%else%}
                     src="" 
