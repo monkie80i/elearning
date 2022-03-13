@@ -43,7 +43,7 @@
                 <a href="{%url 'user_profile_public' course|course_user_id %}" style="text-decoration: none;color: inherit;">
                     <div>
                       <div class="profile-pic-sm">
-                        <img {% if course.user.profile.pic.url %}
+                        <img {% if course.user.profile.pic %}
                         src="{{course.user.profile.pic.url}}" 
                         {%else%}
                         src="{{default_user_image}}" 
