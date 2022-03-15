@@ -10,6 +10,11 @@ def embed_youtube_tag(watch_url ,*args, **kwargs):
         embed_str = '/embed/'
         watch_str = '/watch?v='
         embed_url = embed_str.join(watch_url.split(watch_str))
+
+        if embed_url.find('youtu.be') != -1:
+            #print("nop")
+            v_id = embed_url.split('/')[-1]
+            embed_url = "https://www.youtube.com/embed/"+v_id
         params = {}
         options = ['autoplay','mute']
 
