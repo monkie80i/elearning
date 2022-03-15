@@ -28,7 +28,7 @@
     <div id="your-courses" class="container teacher-home-your-courses">
         <div class="course-list">
             <div id="course-{{course.id}}">
-                <p class="lead m-0 p0"><b>Instructor: </b>{{user.username}}</p>
+                <p class="lead m-0 p0"><b>Instructor: </b>{{course.user.username}}</p>
                 <p class="lead ">{{course.modules.count}} modules</p>
                 <p>{{course.overview}}</p>
                 {% if request.user.is_authenticated and request.user.is_student%}
