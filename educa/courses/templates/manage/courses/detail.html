@@ -9,7 +9,7 @@
 
 {% block content %}
 <section id="course-brief" class="shadow">
-    <div class="container jumboman">
+    <div class="container jumboman text-break">
         <div class="d-flex justify-content-between">
             <div >
                 <h4 class="display-4">{{course.title}}</h3>
@@ -47,7 +47,7 @@
             </ul>
         </div>
         <!--Content-->
-        <div class="col">
+        <div class="col text-break">
             <div class="container module-content-main" id="content" >
                 {%if modules %}
                     {% with modules.first as module_1 %}
