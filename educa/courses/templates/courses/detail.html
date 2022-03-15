@@ -32,11 +32,15 @@
                 <p class="lead ">{{course.modules.count}} modules</p>
                 <p>{{course.overview}}</p>
                 {% if request.user.is_authenticated and request.user.is_student%}
+                    {% if user in course.students.all %}
+                    <a href="{% url 'student_course_detail' course.id %}" class="btn btn-primary-solid btn-big">View</a>
+                    {%else%}
                     <form action="{%url 'student_enroll_course' %}" method="post">
                         {{form.as_p}}
                         {% csrf_token %}
                         <input type="submit" value="Enroll Now" class="btn btn-primary-solid btn-big">   
                     </form>
+                    {%endif%}
                 {%else%}
                 <a href="{% url 'user_registration' 'student' %}" class="btn btn-primary-solid btn-big">Register To Enroll</a>
                 {%endif%}
