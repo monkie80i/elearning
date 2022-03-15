@@ -115,7 +115,7 @@ class UserProfilePrivateView(View,LoginRequiredMixin):
         form_data = {
             'first_name':self.user.first_name,
             'last_name':self.user.last_name,
-            'pic':self.user.profile.pic,
+            #'pic':self.user.profile.pic,
             'dob':self.user.profile.dob,
             'professional_title':self.user.profile.professional_title
         }
@@ -131,15 +131,20 @@ class UserProfilePrivateView(View,LoginRequiredMixin):
         form = self.form_class(request.POST or None,request.FILES)
         if form.is_valid():
             cd = form.cleaned_data
-            print(cd)
+            #print(cd)
             self.user.first_name = cd['first_name']
             self.user.last_name = cd['last_name']
             self.user.profile.dob = cd['dob']
-            self.user.profile.pic = cd['pic']
+            if cd['pic']:
+                self.user.profile.pic = cd['pic']
             self.user.profile.professional_title = cd['professional_title']
             self.user.save()
             self.user.profile.save()
-        return redirect('user_profile_private')
+        context ={
+            'user':self.user,
+            'form':form
+        }
+        return render(request,self.template_name,context)
 
 user_profile_private_view = UserProfilePrivateView.as_view()
 

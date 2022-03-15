@@ -33,16 +33,17 @@ class UserForm(forms.ModelForm):
 class UserProfileEditForm(forms.Form):
     first_name = forms.CharField(max_length=100)
     last_name = forms.CharField(max_length=100)
-    pic = forms.FileField(widget=MyFileInput())
-    dob = forms.DateField()
-    professional_title = forms.CharField(max_length=100)
+    pic = forms.FileField(widget=MyFileInput(),required=False)
+    dob = forms.DateField(required=False)
+    professional_title = forms.CharField(max_length=100,required=False)
 
     
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
         for visible in self.visible_fields():
             visible.field.widget.attrs['class'] = 'form-control border-primary'
-            visible.field.required = True
+            #if visible.name != 'pic':
+            #    visible.field.required = True
     
     def save(self,user_object):
         try:
