@@ -43,9 +43,9 @@
                 <h5 class="">{{user_obj.fullname}}</h5>
                 <p class="fw-light mb-0">{{user_obj.email}}</p>
                 {% if user_obj.is_teacher%}
-                <p class="fw-light mb-0">8 courses</p>
+                <p class="fw-light mb-0">{{user_obj.courses.count}} courses</p>
                 {%else%}
-                <p class="fw-light mb-0">8 courses enrolled</p>
+                <p class="fw-light mb-0">{{user_obj.courses_joined.count}} courses enrolled</p>
                 {%endif%}
             </div>
         </div>
