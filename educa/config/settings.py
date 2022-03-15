@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'adminManager',
     'courses',
     #third party
-    'embed_video',
+    #'embed_video',
 ]
 
 MIDDLEWARE = [

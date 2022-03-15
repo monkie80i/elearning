@@ -11608,7 +11608,7 @@ textarea.form-control-lg {
 }
 @media (max-width: 575.98px) {
   .module-content-main {
-    padding: 2rem 1rem;
+    padding: 2rem 0.5rem;
   }
 }
 @media (max-width: 575.98px) {
@@ -11635,7 +11635,8 @@ textarea.form-control-lg {
   max-width: 100%;
 }
 .content-video {
-  width: auto;
+  aspect-ratio: 16/9;
+  width: 100%;
 }
 
 .register-form-container {

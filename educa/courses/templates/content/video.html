@@ -1,2 +1,2 @@
-{% load embed_video_tags %}
-{% video item.url "small" %}
+{% load embed_youtube %}
+{% embed_youtube_tag item.url 'autoplay' 'mute' class_name='content-video' %}
