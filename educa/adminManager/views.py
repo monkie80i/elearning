@@ -122,7 +122,8 @@ class UserProfilePrivateView(View,LoginRequiredMixin):
         form = self.form_class(initial=form_data)
         context ={
             'user':self.user,
-            'form':form
+            'form':form,
+            'default_user_image':static('images/default-user-image.png')
         }
         return render(request,self.template_name,context)
     
@@ -142,7 +143,8 @@ class UserProfilePrivateView(View,LoginRequiredMixin):
             self.user.profile.save()
         context ={
             'user':self.user,
-            'form':form
+            'form':form,
+            'default_user_image':static('images/default-user-image.png')
         }
         return render(request,self.template_name,context)
 
