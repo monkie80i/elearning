@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'courses',
     #third party
     #'embed_video',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
