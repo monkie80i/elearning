@@ -1,11 +1,17 @@
+from functools import partial
 import math
 from os import stat
 from rest_framework import viewsets,status
 from ..models import Subject,Course,Module
-from .serializers import SubjectSerializer,PublicCourseListSerializer,PublicCourseSerializer
+from .serializers import SubjectSerializer,PublicCourseListSerializer,PublicCourseSerializer,CourseSerializer,ManageCourseMinSzr
 from rest_framework.response import Response
 from rest_framework.authentication import BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from django.core.exceptions import ObjectDoesNotExist
+from utils.helpers import get_object_or_404_json
+from django.shortcuts import get_object_or_404
+from .permissions import IsTeacher
 
 class PaginateViewSetMixin(object):
     page_size = 3
@@ -36,7 +42,7 @@ class SubjectViewSet(viewsets.ViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data,status=status.HTTP_201_CREATED)
-        return Response({'message':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
     
 
 
@@ -63,7 +69,7 @@ class CoursePublicViewSet(PaginateViewSetMixin,viewsets.ViewSet):
             subject_name=None
         total_pages = self.get_total_pages(self.queryset)
         if self.page_number > total_pages or self.page_number < 1:
-            return Response({'message':'Page number out of bound.'},status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response({'detail':'Page number out of bound.'},status=status.HTTP_406_NOT_ACCEPTABLE)
         self.queryset = self.paginate(self.queryset)
         serializer = self.serializer(self.queryset,many=True)
         output['courses'] = serializer.data
@@ -79,3 +85,62 @@ class CoursePublicViewSet(PaginateViewSetMixin,viewsets.ViewSet):
         serializer = PublicCourseSerializer(course)
         return Response(serializer.data,status = status.HTTP_200_OK)
     
+#Manage
+
+class ManageCourseViewSet(viewsets.ViewSet):
+    permission_classes = (IsTeacher,)
+
+    # for teacher
+    def list(self,request):
+        if not request.user.is_teacher:
+            return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
+        courses = Course.objects.filter(user = request.user)
+        serializer = ManageCourseMinSzr(courses,many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+
+    def retrieve(self,request,id=None):
+        if not request.user.is_teacher:
+            return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
+        course = Course.objects.filter(user = request.user,id=id)
+        if not course.exists():
+            return Response({'massage':'Course doesnot exist'},status=status.HTTP_404_NOT_FOUND)
+        serializer = CourseSerializer(course.first())
+        return Response(serializer.data,status=status.HTTP_200_OK)
+
+    def create(self,request):
+        if not request.user.is_teacher:
+            return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
+        serializer = CourseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data,status=status.HTTP_201_CREATED)
+
+    def update(self,request,id=None):
+        if not request.user.is_teacher:
+            return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
+        course = get_object_or_404_json(Course,id=id,user=request.user)
+        serializer = CourseSerializer(instance=course,data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data,status=status.HTTP_202_ACCEPTED)
+    
+    def partial_update(self,request,id=None):
+        if not request.user.is_teacher:
+            return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
+        course = get_object_or_404_json(Course,id=id,user=request.user)
+        serializer = CourseSerializer(instance=course,data=request.data,partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data,status=status.HTTP_206_PARTIAL_CONTENT)
+
+    def destroy(self,request,id=None):
+        if not request.user.is_teacher:
+            return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
+        course = get_object_or_404_json(Course,id=id,user=request.user)
+        try:
+            course.delete()
+        except Exception as e:
+            return Response({'detail':e},status=status.HTTP_409_CONFLICT)
+        return Response({'detail':'Course deleted'},status=status.HTTP_200_OK)
+
+

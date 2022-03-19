@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from .serializers import SubjectSerializer
 from django.test import RequestFactory,TestCase,Client
 from rest_framework.test import APIClient
@@ -7,6 +8,7 @@ import json,requests
 from django.urls import reverse_lazy
 import random
 import math
+from requests.auth import HTTPBasicAuth
 
 class SubjectTestCase(TestCase):
     def setUp(self):
@@ -190,3 +192,131 @@ class PublicCourseDetailTestCase(TestCase):
         print(json.loads(response.content))
         self.assertEqual(response.status_code,404)
     """
+
+class ManageCourseTestCase(TestCase):
+    def setUp(self):
+        subjects = ['science','english','math','python',]
+        for sub in subjects:
+            s = Subject(title=sub.capitalize(),slug=sub)
+            s.save()
+        self.c = APIClient()
+        
+        users = {'teacher1':'teacher1234'}
+        for uname,pwd in users.items():
+            u = User(username=uname)
+            u.set_password(pwd)
+            u.is_teacher =  True
+            u.save()
+        #cred = ''
+        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
+        #self.c.session.headers.update({'x-test': 'true'})
+        all_users = User.objects.all()
+        all_subects = Subject.objects.all()
+        self.subjects = all_subects
+        content = """
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo."""
+        course1 = Course(title="Course 1",overview=content,subject = all_subects.filter(slug='python').first(),user=all_users[0])
+        course2 = Course(title="Course 2",overview=content,subject = all_subects.filter(slug='python').first(),user=all_users[0])
+        course1.save()
+        course2.save()
+        for i in range(1,6):
+            m = Module(title=f'Module 1.{i}',description=content,course=course1)
+            m.save()
+        for i in range(1,4):
+            m = Module(title=f'Module 2.{i}',description=content,course=course2)
+            m.save()
+        #print('subjects',all_subects)
+        #print('users',all_users)
+
+    def test_course_list(self):
+        response = self.c.get(reverse_lazy('api:manage_course_list'))
+        data = json.loads(response.content)
+        #print(data)
+        self.assertEqual(response.status_code,200)
+
+    def test_course_detail(self):
+        response = self.c.get(reverse_lazy('api:manage_course_detail_update_delete',args=[1]))
+        data = json.loads(response.content)
+        #print(data)
+        self.assertEqual(response.status_code,200)
+
+    def test_course_create(self):
+        data = {
+            'subject_slug':'python',
+            'title':'Course 3',
+            'overview':'Brand new course'
+        }
+        response = self.c.post(reverse_lazy('api:manage_course_create'),data=data)
+        resp = json.loads(response.content)
+        self.assertEqual(Course.objects.filter(title=data['title']).exists(),True)
+        #print(resp)
+    
+    def test_course_create_blank_data(self):
+        data = {}
+        prev_course_count = Course.objects.count()
+        response = self.c.post(reverse_lazy('api:manage_course_create'),data=data)
+        resp = json.loads(response.content)
+        self.assertEqual(Course.objects.count(),prev_course_count)
+        #print(resp)
+    
+    def test_course_create_only_subject(self):
+        prev_course_count = Course.objects.count()
+        data = {
+            'subject_slug':'python'
+        }
+        response = self.c.post(reverse_lazy('api:manage_course_create'),data=data)
+        resp = json.loads(response.content)
+        self.assertEqual(Course.objects.count(),prev_course_count)
+        #print(resp,response.status_code)
+
+    def test_course_create_invalid_subject(self):
+        data = {
+            'subject_slug':'pyth',
+            'title':'Course 3',
+            'overview':'Brand new course'
+        }
+        response = self.c.post(reverse_lazy('api:manage_course_create'),data=data)
+        self.assertEqual(response.status_code,400)
+        #print(response.content,response.status_code)
+
+    def test_course_update_full_data(self):
+        course = Course.objects.get(id=1)
+        data = {
+            'title':course.title,
+            'subject_slug': course.subject.slug,
+            'overview':'New Overview'
+        }
+        #print(data)
+        response = self.c.put(reverse_lazy('api:manage_course_detail_update_delete',args=[1]),data=data)
+        #print(json.loads(response.content))
+        course = Course.objects.get(id=1)
+        self.assertEqual(course.overview,data['overview'])
+    
+    def test_course_update_object_doesnot_exist(self):
+        course = Course.objects.get(id=1)
+        data = {
+            'title':course.title,
+            'subject_slug': course.subject.slug,
+            'overview':'New Overview'
+        }
+        #print(data)
+        response = self.c.put(reverse_lazy('api:manage_course_detail_update_delete',args=[5]),data=data)
+        #print(json.loads(response.content))
+        #self.assertEqual(res,data['overview'])
+
+    def test_course_update_partial(self):
+        course = Course.objects.get(id=1)
+        data = {
+            'overview':'New Overview'
+        }
+        #print(data)
+        response = self.c.patch(reverse_lazy('api:manage_course_detail_update_delete',args=[1]),data=data)
+        #print(json.loads(response.content))
+        course = Course.objects.get(id=1)
+        self.assertEqual(course.overview,data['overview'])
+
+    def test_course_delete(self):
+        course = Course.objects.get(id=1)
+        response = self.c.delete(reverse_lazy('api:manage_course_detail_update_delete',args=[1]))
+        #print(json.loads(response.content))
+        self.assertEqual(Course.objects.filter(id=1).exists(),False)
