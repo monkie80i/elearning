@@ -84,12 +84,14 @@ class ManageCourseMinSzr(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+
+
 class CourseSerializer(serializers.ModelSerializer):
     user = UserBasicSzr(many=False,read_only=True)
     subject = SubjectSerializer(many=False,read_only=True)
     modules = ModuleSerializerForCourse(many=True,read_only=True)
     modules_count = serializers.IntegerField(source='modules.count',read_only=True)
-    subject_slug = serializers.SlugField(write_only=True,required=False)
+    subject_slug = serializers.SlugField(write_only=True,required=True)
     class Meta:
         model = Course
         fields = [

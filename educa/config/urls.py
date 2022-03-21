@@ -21,6 +21,22 @@ from django.contrib.auth.views import LoginView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view 
+from drf_yasg import openapi 
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Egyan API",
+        default_version="v1",
+        description="APIS for the Egyan application. Egyan is an education platform.",
+        terms_of_service="https://www.google.com/policies/terms/",
+        contact=openapi.Contact(email="shahzan.sadick@gmail.com"),
+        license=openapi.License(name="BSD License"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,6 +44,7 @@ urlpatterns = [
     path('',include('adminManager.urls')),
     path('',include('courses.urls')), 
     path('webpack-test/',TemplateView.as_view(template_name='test.html')),
+    path('api/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

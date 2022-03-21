@@ -12,6 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from utils.helpers import get_object_or_404_json
 from django.shortcuts import get_object_or_404
 from .permissions import IsTeacher
+from drf_yasg.utils import swagger_auto_schema
 
 class PaginateViewSetMixin(object):
     page_size = 3
@@ -36,6 +37,7 @@ class SubjectViewSet(viewsets.ViewSet):
         serializer = SubjectSerializer(self.queryset,many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(request_body=SubjectSerializer)
     def create(self,request):
         if request.user.is_authenticated:
             serializer = SubjectSerializer(data=request.data)
@@ -107,6 +109,8 @@ class ManageCourseViewSet(viewsets.ViewSet):
         serializer = CourseSerializer(course.first())
         return Response(serializer.data,status=status.HTTP_200_OK)
 
+    #from .schemas import CourseReadSerializer,CourseWriteSerializer
+    @swagger_auto_schema(request_body=CourseSerializer)
     def create(self,request):
         if not request.user.is_teacher:
             return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
@@ -115,6 +119,7 @@ class ManageCourseViewSet(viewsets.ViewSet):
         serializer.save(user=request.user)
         return Response(serializer.data,status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(request_body=CourseSerializer)
     def update(self,request,id=None):
         if not request.user.is_teacher:
             return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
@@ -124,6 +129,7 @@ class ManageCourseViewSet(viewsets.ViewSet):
         serializer.save()
         return Response(serializer.data,status=status.HTTP_202_ACCEPTED)
     
+    @swagger_auto_schema(request_body=CourseSerializer)
     def partial_update(self,request,id=None):
         if not request.user.is_teacher:
             return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)

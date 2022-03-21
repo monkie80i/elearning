@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     #third party
     #'embed_video',
     'rest_framework',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
