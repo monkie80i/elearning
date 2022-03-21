@@ -1,5 +1,5 @@
-import imp
-from sys import modules
+from importlib.metadata import requires
+
 from wsgiref import validate
 from rest_framework import serializers
 from ..models import Subject,Course,Module,Content,Text,Image,File,Video
@@ -12,6 +12,14 @@ class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
         fields = [
+            'id',
+            'title',
+            'slug'
+        ]
+
+class SubjectReadSerializer(SubjectSerializer):
+    class Meta(SubjectSerializer.Meta):
+        read_only_fields = [
             'id',
             'title',
             'slug'
@@ -85,12 +93,11 @@ class ManageCourseMinSzr(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-
 class CourseSerializer(serializers.ModelSerializer):
-    user = UserBasicSzr(many=False,read_only=True)
-    subject = SubjectSerializer(many=False,read_only=True)
-    modules = ModuleSerializerForCourse(many=True,read_only=True)
-    modules_count = serializers.IntegerField(source='modules.count',read_only=True)
+    user = UserBasicSzr(many=False,required=False,read_only=True)
+    subject = SubjectReadSerializer(many=False,required=False,read_only=True)
+    modules = ModuleSerializerForCourse(many=True,required=False,read_only=True)
+    modules_count = serializers.IntegerField(source='modules.count',required=False,read_only=True)
     subject_slug = serializers.SlugField(write_only=True,required=True)
     class Meta:
         model = Course
@@ -107,7 +114,13 @@ class CourseSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'title': {'required': True},
             'overview': {'required': True},
-        } 
+        }
+        read_only_fields = [
+            'user',
+            'subject',
+            'modules',
+            'modules_count'
+        ]
 
     def validate_subject_slug(self,value):
         #print("Enter")
