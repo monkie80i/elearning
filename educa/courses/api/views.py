@@ -60,15 +60,15 @@ class CoursePublicViewSet(PaginateViewSetMixin,viewsets.ViewSet):
         else:
             self.page_number = 1
 
-        if 'subject_name' in kwargs:
-            subject_name = kwargs['subject_name']
-            if subject_name in [subject.slug for subject in Subject.objects.all() ]:
-                output['subject_name'] = subject_name
-                self.queryset = self.queryset.filter(subject__slug=subject_name)
+        if 'subject_slug' in kwargs:
+            subject_slug = kwargs['subject_slug']
+            if subject_slug in [subject.slug for subject in Subject.objects.all() ]:
+                output['subject_slug'] = subject_slug
+                self.queryset = self.queryset.filter(subject__slug=subject_slug)
             else:
                 return Response({'massage':'Subject doesnot exist'},status=status.HTTP_404_NOT_FOUND)
         else:
-            subject_name=None
+            subject_slug=None
         total_pages = self.get_total_pages(self.queryset)
         if self.page_number > total_pages or self.page_number < 1:
             return Response({'detail':'Page number out of bound.'},status=status.HTTP_406_NOT_ACCEPTABLE)
