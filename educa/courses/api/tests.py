@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from genericpath import exists
 from .serializers import SubjectSerializer
 from django.test import RequestFactory,TestCase,Client
 from rest_framework.test import APIClient
@@ -201,13 +202,26 @@ class ManageCourseTestCase(TestCase):
             s.save()
         self.c = APIClient()
         
-        users = {'teacher1':'teacher1234'}
-        for uname,pwd in users.items():
-            u = User(username=uname)
-            u.set_password(pwd)
-            u.is_teacher =  True
+        users = [
+            {   
+                'name':'teacher1',
+                'password':'teacher1234',
+                'is_teacher':True,
+                'is_student':False,
+
+            },
+            {   
+                'name':'student1',
+                'password':'student1234',
+                'is_teacher':False,
+                'is_student':True,
+            }
+        ]
+        for user in users:
+            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
+            u.set_password(user['password'])
             u.save()
-        #cred = ''
+        all_users = User.objects.all()
         self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
         #self.c.session.headers.update({'x-test': 'true'})
         all_users = User.objects.all()
@@ -233,12 +247,37 @@ class ManageCourseTestCase(TestCase):
         data = json.loads(response.content)
         #print(data)
         self.assertEqual(response.status_code,200)
+    
+    def test_course_list_anonymous(self):
+        client = APIClient()
+        response = client.get(reverse_lazy('api:manage_course_list'))
+        data = json.loads(response.content)
+        #print(data,response.status_code)
+        self.assertEqual(response.status_code,401)
+    
+    def test_course_list_not_teacher(self):
+        client = APIClient()
+        cred = 'student1:student1234'
+        import base64
+        encoded_cred = base64.b64encode(cred.encode()).decode()
+        print(encoded_cred)
+        client.credentials(HTTP_AUTHORIZATION=f'Basic {encoded_cred}')
+        response = client.get(reverse_lazy('api:manage_course_list'))
+        data = json.loads(response.content)
+        #print(data)
+        self.assertEqual(response.status_code,403)
 
     def test_course_detail(self):
         response = self.c.get(reverse_lazy('api:manage_course_detail_update_delete',args=[1]))
         data = json.loads(response.content)
         #print(data)
         self.assertEqual(response.status_code,200)
+    
+    def test_course_detail_that_does_not_exists(self):
+        response = self.c.get(reverse_lazy('api:manage_course_detail_update_delete',args=[3]))
+        data = json.loads(response.content)
+        #print(data,response.status_code)
+        self.assertEqual(response.status_code,404)
 
     def test_course_create(self):
         data = {
@@ -320,3 +359,77 @@ class ManageCourseTestCase(TestCase):
         response = self.c.delete(reverse_lazy('api:manage_course_detail_update_delete',args=[1]))
         #print(json.loads(response.content))
         self.assertEqual(Course.objects.filter(id=1).exists(),False)
+
+class ManageCourseListPaginationTestCase(TestCase):
+    def setUp(self):
+        subjects = ['science','english','math','python',]
+        for sub in subjects:
+            s = Subject(title=sub.capitalize(),slug=sub)
+            s.save()
+        self.c = APIClient()
+        
+        users = [
+            {   
+                'name':'teacher1',
+                'password':'teacher1234',
+                'is_teacher':True,
+                'is_student':False,
+
+            },
+            {   
+                'name':'student1',
+                'password':'student1234',
+                'is_teacher':False,
+                'is_student':True,
+            }
+        ]
+        for user in users:
+            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
+            u.set_password(user['password'])
+            u.save()
+        all_users = User.objects.all()
+        teacher = all_users.filter(is_teacher=True).first()
+        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
+        #self.c.session.headers.update({'x-test': 'true'})
+        all_subects = Subject.objects.all()
+        self.subjects = all_subects
+        content = """
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo."""
+        for i in range(1,54):
+            c = Course(
+                title=f'Course {i}',
+                overview=content,
+                user = teacher,
+                subject=random.choice(all_subects)
+            )
+            c.save()
+        self.total_pages = math.ceil(Course.objects.filter(user=teacher).count()/5)
+        print('total_pages',self.total_pages)
+        
+
+    def test_course_list(self):
+        response = self.c.get(reverse_lazy('api:manage_course_list'))
+        data = json.loads(response.content)
+        #print(data)
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(len(data['courses']),5)
+        self.assertEqual(data['total_pages'],self.total_pages)
+        self.assertEqual(data['page_number'],1)
+    
+    def test_course_list_page(self):
+        response = self.c.get(reverse_lazy('api:manage_course_list_page',args=[1]))
+        data = json.loads(response.content)
+        #print(data)
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(len(data['courses']),5)
+        self.assertEqual(data['total_pages'],self.total_pages)
+        self.assertEqual(data['page_number'],1)
+
+    def test_course_list_page_last(self):
+        response = self.c.get(reverse_lazy('api:manage_course_list_page',args=[self.total_pages]))
+        data = json.loads(response.content)
+        #print(data)
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(len(data['courses']),3)
+        self.assertEqual(data['total_pages'],self.total_pages)
+        self.assertEqual(data['page_number'],self.total_pages)

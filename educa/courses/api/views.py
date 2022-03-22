@@ -1,22 +1,41 @@
+from dis import dis
 from functools import partial
 import math
 from os import stat
+from django import dispatch
 from rest_framework import viewsets,status
 from ..models import Subject,Course,Module
 from .serializers import SubjectSerializer,PublicCourseListSerializer,PublicCourseSerializer,CourseSerializer,ManageCourseMinSzr
 from rest_framework.response import Response
 from rest_framework.authentication import BasicAuthentication
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated,IsAuthenticatedOrReadOnly
 from django.core.exceptions import ObjectDoesNotExist
 from utils.helpers import get_object_or_404_json
 from django.shortcuts import get_object_or_404
 from .permissions import IsTeacher
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework.exceptions import APIException,NotFound,PermissionDenied
 
+#helper functions
+def has_subject_slug_in_parameter(*args, **kwargs):
+    """IF there isa subject slug in kargs return it or else retutn 0"""
+    if 'subject_slug' in kwargs:
+        return kwargs['subject_slug']
+    else:
+        return None
+
+def filter_course_by_subject(qs,subject_slug):
+    """Filters a course queryset with respect to the subject slug provided
+    """
+    if subject_slug in [subject.slug for subject in Subject.objects.all() ]:
+        qs = qs.filter(subject__slug=subject_slug)
+    else:
+        raise NotFound(detail="Subject doesnot exist",code = status.HTTP_404_NOT_FOUND)
+    return qs  
+#helper classes
 class PaginateViewSetMixin(object):
     page_size = 3
-
+    
     def paginate(self,qs):
         """Thake s queryset or an list ,
         page_size is the number of item in one page,
@@ -29,6 +48,39 @@ class PaginateViewSetMixin(object):
     def get_total_pages(self,qs):
         """gets the total number of pages"""
         return math.ceil(qs.count()/self.page_size)
+    
+ 
+
+class PaginateNewMIxin(object):
+    page_size = 3 #default
+    queryset = None
+    paginated_qs = None
+    page_number = 1
+    outpu = {}
+
+    def paginate(self,*args, **kwargs):
+        """Thake a queryset or a list ,
+        page_size is the number of item in one page,
+        page_number starts from 1 to length of qs/page_size
+        """
+        if self.queryset is not None:
+            # set page number
+            if 'page_number' in kwargs:
+                self.page_number = kwargs['page_number']
+            else:
+                self.page_number = 1
+            #sets the total number of pages
+            self.total_pages = math.ceil(self.queryset.count()/self.page_size)
+            #paginate
+            start = (self.page_number-1)*self.page_size
+            end = self.page_number*self.page_size
+            self.paginated_qs = self.queryset[start:end]
+            self.output = {
+                'page_number':self.page_number,
+                'total_pages':self.total_pages
+            }
+            return self.paginated_qs
+        
 
 class SubjectViewSet(viewsets.ViewSet):
     queryset = Subject.objects.all()
@@ -88,32 +140,45 @@ class CoursePublicViewSet(PaginateViewSetMixin,viewsets.ViewSet):
         return Response(serializer.data,status = status.HTTP_200_OK)
     
 #Manage
+def is_aiuthenticated_teacher(request):
+    if request.user.is_authenticated:
+        is_teacher = request.user.is_teacher
+    else:
+        is_teacher = False
+    if is_teacher == True:
+        return True
+    else:
+        raise PermissionDenied()
 
-class ManageCourseViewSet(viewsets.ViewSet):
-    permission_classes = (IsTeacher,)
+
+
+class ManageCourseViewSet(PaginateNewMIxin,viewsets.ViewSet):
+    queryset = None
+    permission_classes = [IsTeacher]
+    page_size = 5
+
+    def get_queryset(self,request):
+        return Course.objects.filter(user= request.user)
 
     # for teacher
-    def list(self,request):
-        if not request.user.is_teacher:
-            return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
-        courses = Course.objects.filter(user = request.user)
+    def list(self,request,*args, **kwargs):
+        self.queryset = self.get_queryset(request)
+        subject_slug = has_subject_slug_in_parameter(*args, **kwargs)
+        if subject_slug is not None:
+            self.queryset = filter_course_by_subject(self.queryset,subject_slug)
+        courses = self.paginate(*args, **kwargs)
         serializer = ManageCourseMinSzr(courses,many=True)
-        return Response(serializer.data,status=status.HTTP_200_OK)
+        self.output['courses'] = serializer.data
+        return Response(self.output,status=status.HTTP_200_OK)
 
     def retrieve(self,request,id=None):
-        if not request.user.is_teacher:
-            return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
-        course = Course.objects.filter(user = request.user,id=id)
-        if not course.exists():
-            return Response({'massage':'Course doesnot exist'},status=status.HTTP_404_NOT_FOUND)
-        serializer = CourseSerializer(course.first())
+        course = get_object_or_404(Course,id=id,user=request.user)
+        serializer = CourseSerializer(course)
         return Response(serializer.data,status=status.HTTP_200_OK)
 
     #from .schemas import CourseReadSerializer,CourseWriteSerializer
     @swagger_auto_schema(request_body=CourseSerializer)
     def create(self,request):
-        if not request.user.is_teacher:
-            return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
         serializer = CourseSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
@@ -121,9 +186,7 @@ class ManageCourseViewSet(viewsets.ViewSet):
 
     @swagger_auto_schema(request_body=CourseSerializer)
     def update(self,request,id=None):
-        if not request.user.is_teacher:
-            return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
-        course = get_object_or_404_json(Course,id=id,user=request.user)
+        course = get_object_or_404(Course,id=id,user=request.user)
         serializer = CourseSerializer(instance=course,data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -131,17 +194,13 @@ class ManageCourseViewSet(viewsets.ViewSet):
     
     @swagger_auto_schema(request_body=CourseSerializer)
     def partial_update(self,request,id=None):
-        if not request.user.is_teacher:
-            return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
-        course = get_object_or_404_json(Course,id=id,user=request.user)
+        course = get_object_or_404(Course,id=id,user=request.user)
         serializer = CourseSerializer(instance=course,data=request.data,partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data,status=status.HTTP_206_PARTIAL_CONTENT)
 
     def destroy(self,request,id=None):
-        if not request.user.is_teacher:
-            return Response({'detail':'Unauthorized'},status=status.HTTP_401_UNAUTHORIZED)
         course = get_object_or_404_json(Course,id=id,user=request.user)
         try:
             course.delete()

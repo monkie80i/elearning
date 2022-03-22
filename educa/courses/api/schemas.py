@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from .serializers import *
+from drf_yasg import openapi
 # these are only for schema generation in documentation
+
+
 
 class CourseWriteSerializer(serializers.ModelSerializer):
     subject_slug = serializers.SlugField(write_only=True,required=True)
