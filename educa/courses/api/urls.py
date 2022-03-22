@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SubjectViewSet,CoursePublicViewSet,ManageCourseViewSet
+from .views import SubjectViewSet,CoursePublicViewSet,ManageCourseViewSet,ManageModuleCreate,ManageModuleDetail
 
 app_name = 'courses'
 
@@ -22,5 +22,7 @@ urlpatterns = [
         'patch':'partial_update',
         'delete':'destroy'
     }),name='manage_course_detail_update_delete'),
+    path('manage/module/<int:course_id>/',ManageModuleCreate.as_view(),name='manage_module_create'),
+    path('manage/module/detail/<int:id>/',ManageModuleDetail.as_view(),name='manage_module_detail'),
 
 ]

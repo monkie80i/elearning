@@ -62,6 +62,8 @@ class Content(models.Model):
     class Meta:
         ordering = ['order']
 
+
+
 class ItemBase(models.Model):
     owner = models.ForeignKey(User,related_name='%(class)s_related',on_delete=models.CASCADE,null=True,blank=True)
     title = models.CharField(max_length=100,null=True,blank=True)
@@ -70,6 +72,10 @@ class ItemBase(models.Model):
 
     def render(self):
         return render_to_string(f'content/{self._meta.model_name}.html',{'item':self})
+
+    def serialize(self):
+        #return item_serializer[self._meta.model_name](self).data
+        pass
 
     class Meta:
         abstract = True

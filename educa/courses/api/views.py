@@ -1,20 +1,21 @@
-from dis import dis
-from functools import partial
+from http.client import NotConnected
 import math
-from os import stat
-from django import dispatch
+from urllib import response
+from webbrowser import get
 from rest_framework import viewsets,status
-from ..models import Subject,Course,Module
-from .serializers import SubjectSerializer,PublicCourseListSerializer,PublicCourseSerializer,CourseSerializer,ManageCourseMinSzr
+from rest_framework.views import APIView
+from ..models import Subject,Course,Module,Content
+from .serializers import SubjectSerializer,PublicCourseListSerializer,PublicCourseSerializer
+from .serializers import  CourseSerializer,ManageCourseMinSzr,ModuleSerializer
+from .serializers import  TextSerializer,ImageSerializer,FileSerializer,VideoSerializer
 from rest_framework.response import Response
-from rest_framework.authentication import BasicAuthentication
-from rest_framework.permissions import IsAuthenticated,IsAuthenticatedOrReadOnly
 from django.core.exceptions import ObjectDoesNotExist
 from utils.helpers import get_object_or_404_json
 from django.shortcuts import get_object_or_404
 from .permissions import IsTeacher
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import APIException,NotFound,PermissionDenied
+from django.apps import apps
 
 #helper functions
 def has_subject_slug_in_parameter(*args, **kwargs):
@@ -190,7 +191,7 @@ class ManageCourseViewSet(PaginateNewMIxin,viewsets.ViewSet):
         serializer = CourseSerializer(instance=course,data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data,status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.data,status=status.HTTP_205_RESET_CONTENT)
     
     @swagger_auto_schema(request_body=CourseSerializer)
     def partial_update(self,request,id=None):
@@ -209,3 +210,134 @@ class ManageCourseViewSet(PaginateNewMIxin,viewsets.ViewSet):
         return Response({'detail':'Course deleted'},status=status.HTTP_200_OK)
 
 
+class ManageModuleCreate(APIView):
+    permission_classes = [IsTeacher]
+    
+    def post(self, request,course_id=None, *args, **kwargs):
+        # create
+        try:
+            course = Course.objects.get(id=course_id,user=request.user)
+        except ObjectDoesNotExist:
+            return Response({'detail':'Course does not exist.'},status=status.HTTP_404_NOT_FOUND)
+        serializer = ModuleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(course=course)
+        return Response(serializer.data,status=status.HTTP_201_CREATED)
+
+class ManageModuleDetail(APIView):
+    permission_classes = [IsTeacher]
+
+    def get(self, request,id=None, *args, **kwargs):
+        # detail View
+        try:
+            module = Module.objects.get(id=id,course__user=request.user)
+        except ObjectDoesNotExist:
+            return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
+        serializer = ModuleSerializer(module)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    
+    def put(self, request,id=None,*args, **kwargs):
+        # update
+        #test whether the course is persisting or changing
+        try:
+            module = Module.objects.get(id=id,course__user=request.user)
+        except ObjectDoesNotExist:
+            return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
+        serializer = ModuleSerializer(instance=module,data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data,status=status.HTTP_205_RESET_CONTENT)
+    
+    def patch(self, request,id=None, *args, **kwargs):
+        #partial update
+        try:
+            module = Module.objects.get(id=id,course__user=request.user)
+        except ObjectDoesNotExist:
+            return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
+        serializer = ModuleSerializer(instance=module,data=request.data,partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data,status=status.HTTP_206_PARTIAL_CONTENT)
+    
+    def delete(self, request, *args, **kwargs):
+        #delete
+        try:
+            module = Module.objects.get(id=id,course__user=request.user)
+        except ObjectDoesNotExist:
+            return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
+        try:
+            module.delete()
+        except Exception as e:
+            return Response({'detail':e},status=status.HTTP_409_CONFLICT)
+        return Response({'detail':'Module deleted'},status=status.HTTP_200_OK)
+
+content_serializer = {
+    'text': TextSerializer,
+    'image': ImageSerializer,
+    'file': FileSerializer,
+    'video':VideoSerializer
+}
+
+class ManageContentList(APIView):
+    permission_classes = [IsTeacher]
+
+    def get(self, request,module_id=None, *args, **kwargs):
+        try:
+            module = Module.objects.get(id=module_id,course__user = request.user)
+        except ObjectDoesNotExist:
+            return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
+        module_szr = ModuleSerializer(module)
+        contents = []
+        for content in module.content.all():
+            contents.append(content_serializer[content._meta.model_name](content.item))
+        output = {}
+        output['module'] = module_szr.data
+        output['contents'] = contents
+        return Response(output,status=status.HTTP_200_OK)
+    
+    def post(self, request,module_id=None,content_type=None, *args, **kwargs):
+        try:
+            module = Module.objects.get(id=module_id,course__user = request.user)
+        except ObjectDoesNotExist:
+            return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
+        if content_type not in ('text','image','file','video'):
+            return Response({'detail':"Need Content type in parameter.Options:('text','image','file','video')."},status=status.HTTP_400_BAD_REQUEST)
+        module_szr = ModuleSerializer(module)
+        data = request.data
+        if request.FILES:
+            data = {**request.data,**request.FILES}
+        serializer = content_serializer[content_type](data=data)
+        serializer.is_valid(raise_exception=True)
+        item = serializer.save(owner=request.user)
+        content = Content(module=module,item=item)
+        content.save()
+        output = {}
+        output['module'] = module_szr.data
+        output['content'] = serializer.data
+        return Response(output,status=status.HTTP_201_CREATED)
+
+class ManageContentDetail(APIView):
+    permission_classes = [IsTeacher]
+
+    def get_model(self,model_name):
+        if model_name in ('text','image','file','video'):
+            return apps.get_model(app_label='courses',model_name=model_name)
+        return None
+
+    def put(self, request,content_type=None,id=None, *args, **kwargs):
+        if content_type not in ('text','image','file','video'):
+            return Response({'detail':"Need Content type in parameter.Options:('text','image','file','video')."},status=status.HTTP_400_BAD_REQUEST)
+        try:
+            item = self.get_model(content_type).objects.get(id=id,owner = request.user)
+        except ObjectDoesNotExist:
+            return Response({'detail':'Content does not exist.'},status=status.HTTP_404_NOT_FOUND)
+        data = request.data
+        if request.FILES:
+            data = {**request.data,**request.FILES}
+        serializer = content_serializer[content_type](data=data)
+        serializer.is_valid(raise_exception=True)
+        item = serializer.save(owner=request.user)
+        output = {}
+        output['content'] = serializer.data
+        return Response(output,status=status.HTTP_205_RESET_CONTENT)

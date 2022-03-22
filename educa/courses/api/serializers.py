@@ -1,4 +1,6 @@
+from dataclasses import field
 from importlib.metadata import requires
+from pyexpat import model
 
 from wsgiref import validate
 from rest_framework import serializers
@@ -150,8 +152,22 @@ class CourseSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class CourseSzeForModule(serializers.ModelSerializer):
+    subject = serializers.SlugField(source = "subject.slug")
+    modules_count = serializers.IntegerField(source='modules.count')
+    class Meta:
+        model = Course
+        fields = [
+            'id',
+            'subject',
+            'title',
+            'overview',
+            'modules_count'
+        ]
+        read_only_fields = fields
 
 class ModuleSerializer(serializers.ModelSerializer):
+    content_count = serializers.IntegerField(source='contents.count')
     class Meta:
         model = Module
         fields = [
@@ -159,6 +175,29 @@ class ModuleSerializer(serializers.ModelSerializer):
             'title',
             'description',
             'order',
+            'contents',
+            'content_count',
             'course'
         ]
-        read_only_fields = ['id','course']
+        read_only_fields = ['id','course','content_count','contents']
+
+class ItemSerializer(serializers.ModelSerializer):
+    content_type = serializers.CharField(source="_meta.model_name",read_only=True)
+    class Meta:
+        exclude = ['created','updated']
+
+class TextSerializer(ItemSerializer):
+    class Meta(ItemSerializer.Meta):
+        model = Text
+
+class ImageSerializer(ItemSerializer):
+    class Meta(ItemSerializer.Meta):
+        model = Image
+
+class FileSerializer(ItemSerializer):
+    class Meta(ItemSerializer.Meta):
+        model = File
+
+class VideoSerializer(ItemSerializer):
+    class Meta(ItemSerializer.Meta):
+        model = Video

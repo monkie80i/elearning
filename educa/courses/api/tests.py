@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from genericpath import exists
+from pydoc import describe
+from turtle import title
 from .serializers import SubjectSerializer
 from django.test import RequestFactory,TestCase,Client
 from rest_framework.test import APIClient
@@ -433,3 +435,141 @@ class ManageCourseListPaginationTestCase(TestCase):
         self.assertEqual(len(data['courses']),3)
         self.assertEqual(data['total_pages'],self.total_pages)
         self.assertEqual(data['page_number'],self.total_pages)
+
+from .serializers import  TextSerializer,ImageSerializer,FileSerializer,VideoSerializer
+content_serializer = {
+    'text': TextSerializer,
+    'image': ImageSerializer,
+    'file': FileSerializer,
+    'video':VideoSerializer
+}
+
+class ContentSerializerTestCase(TestCase):
+    def setUp(self):
+        subjects = ['science','english','math','python',]
+        for sub in subjects:
+            s = Subject(title=sub.capitalize(),slug=sub)
+            s.save()
+        self.c = APIClient()
+        users = [
+            {   
+                'name':'teacher1',
+                'password':'teacher1234',
+                'is_teacher':True,
+                'is_student':False,
+
+            },
+        ]
+        for user in users:
+            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
+            u.set_password(user['password'])
+            u.save()
+        all_users = User.objects.all()
+        teacher = all_users.filter(is_teacher=True).first()
+        self.teacher = teacher
+        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
+        all_subects = Subject.objects.all()
+        self.subjects = all_subects
+        content = """
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, 
+        on faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. 
+        Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor
+         venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim 
+         sit amet leo."""
+        course = Course(
+            title='Course 1',
+            overview=content,
+            user = teacher,
+            subject=random.choice(all_subects)
+        )
+        course.save()
+        self.module = Module(
+            title="Module 1",
+            description=content,
+            course=course
+        )
+        self.module.save()
+    
+    def test_create_content_text(self):
+        print(self.module.contents.all())
+
+        content_type='text'
+        data = {
+            'title':'Greeting',
+            'content':' hai ther How are you'
+        }
+        serializer = content_serializer[content_type](data=data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save(owner=self.teacher)
+        print(serializer.data)
+        print(type(instance))
+        content = Content(module=self.module,item=instance)
+        content.save()
+        self.assertEqual(self.module.contents.all()[0].item,instance)
+
+    
+    def test_create_content_image(self):
+        print(self.module.contents.all())
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        image = SimpleUploadedFile(r'C:\Users\ZAHN_PC\Documents\GitHub\Portfolio\egyan_templates\EGYAN_TEMPLATES\assets\images\socreatese.jpg', b"file_content", content_type="video/mp4")
+        content_type='image'
+        data = {
+            'title':'My Image',
+            'file':image
+        }
+        serializer = content_serializer[content_type](data=data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save(owner=self.teacher)
+        print(serializer.data)
+        print(type(instance))
+        content = Content(module=self.module,item=instance)
+        content.save()
+        self.assertEqual(self.module.contents.all()[0].item,instance)
+
+class ManageModuleTestCase(TestCase):
+    def setUp(self):
+        subjects = ['science','english','math','python',]
+        for sub in subjects:
+            s = Subject(title=sub.capitalize(),slug=sub)
+            s.save()
+        self.c = APIClient()
+        users = [
+            {   
+                'name':'teacher1',
+                'password':'teacher1234',
+                'is_teacher':True,
+                'is_student':False,
+
+            },
+        ]
+        for user in users:
+            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
+            u.set_password(user['password'])
+            u.save()
+        all_users = User.objects.all()
+        teacher = all_users.filter(is_teacher=True).first()
+        self.teacher = teacher
+        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
+        all_subects = Subject.objects.all()
+        self.subjects = all_subects
+        content = """
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, 
+        on faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. 
+        Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor
+         venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim 
+         sit amet leo."""
+        self.course = Course(
+            title='Course 1',
+            overview=content,
+            user = teacher,
+            subject=random.choice(all_subects)
+        )
+        self.course.save()
+
+#test serializer for each item type
+#test serializer for each item type with less fields,without partial
+#test serializer for each item type with less fields,with partial
+#test api end point for each item type,with less fields
+#check if after updatio of item, the user is still there or not and also the content
