@@ -177,8 +177,8 @@ class ManageCourseViewSet(PaginateNewMIxin,viewsets.ViewSet):
         serializer = CourseSerializer(course)
         return Response(serializer.data,status=status.HTTP_200_OK)
 
-    #from .schemas import CourseReadSerializer,CourseWriteSerializer
-    @swagger_auto_schema(request_body=CourseSerializer)
+    from .schemas import CourseCreateRequest
+    @swagger_auto_schema(request_body=CourseCreateRequest,responses={status.HTTP_200_OK:CourseSerializer})
     def create(self,request):
         serializer = CourseSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -288,9 +288,10 @@ class ManageContentList(APIView):
         except ObjectDoesNotExist:
             return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
         module_szr = ModuleSerializer(module)
+        module_szr = ModuleSerializer(module).data.copy()
+        module_szr.pop('contents')
+        content_count = module_szr.pop('content_count')
         contents = []
-        for content in module.content.all():
-            contents.append(content_serializer[content._meta.model_name](content.item))
         output = {}
         output['module'] = module_szr.data
         output['contents'] = contents
@@ -340,4 +341,4 @@ class ManageContentDetail(APIView):
         item = serializer.save(owner=request.user)
         output = {}
         output['content'] = serializer.data
-        return Response(output,status=status.HTTP_205_RESET_CONTENT)
+        return Response(output,status=status.HTTP_205_RESET_CONTENT)        serializer.save()
