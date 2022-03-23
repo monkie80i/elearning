@@ -167,7 +167,7 @@ class CourseSzeForModule(serializers.ModelSerializer):
         read_only_fields = fields
 
 class ModuleSerializer(serializers.ModelSerializer):
-    content_count = serializers.IntegerField(source='contents.count')
+    content_count = serializers.IntegerField(source='contents.count',read_only=True)
     class Meta:
         model = Module
         fields = [
@@ -179,7 +179,24 @@ class ModuleSerializer(serializers.ModelSerializer):
             'content_count',
             'course'
         ]
-        read_only_fields = ['id','course','content_count','contents']
+        """extra_kwargs = {
+            'title': {'required': True},
+            'description': {'required': True},
+        }"""
+        read_only_fields = ['id','course','contents']
+    
+    def update(self,instance, validated_data,*args, **kwargs):
+        #if 'partial' in kwargs:
+        #   print("Is partial Update")
+        instance.title = validated_data.get('title',instance.title)
+        instance.description = validated_data.get('description',instance.description)
+        instance.save()
+        return instance
+    
+class ContentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Content
+        exclude = ['created','updated']
 
 class ItemSerializer(serializers.ModelSerializer):
     content_type = serializers.CharField(source="_meta.model_name",read_only=True)
@@ -189,15 +206,28 @@ class ItemSerializer(serializers.ModelSerializer):
 class TextSerializer(ItemSerializer):
     class Meta(ItemSerializer.Meta):
         model = Text
+        extra_kwargs = {
+            'content': {'required': True},
+        }
+
 
 class ImageSerializer(ItemSerializer):
     class Meta(ItemSerializer.Meta):
         model = Image
+        extra_kwargs = {
+            'file': {'required': True},
+        }
 
 class FileSerializer(ItemSerializer):
     class Meta(ItemSerializer.Meta):
         model = File
+        extra_kwargs = {
+            'file': {'required': True},
+        }
 
 class VideoSerializer(ItemSerializer):
     class Meta(ItemSerializer.Meta):
         model = Video
+        extra_kwargs = {
+            'url': {'required': True},
+        }

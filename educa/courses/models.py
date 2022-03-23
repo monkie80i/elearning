@@ -35,8 +35,8 @@ class Course(models.Model):
 
 class Module(models.Model):
     course = models.ForeignKey(Course,related_name='modules',on_delete=models.CASCADE,null=True,blank=True)
-    title = models.CharField(max_length=100,null=True,blank=True)
-    description = models.TextField(null=True,blank=True)
+    title = models.CharField(max_length=100)
+    description = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     order = OrderField(blank=True,for_field='course')

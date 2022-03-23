@@ -6,7 +6,7 @@ from rest_framework import viewsets,status
 from rest_framework.views import APIView
 from ..models import Subject,Course,Module,Content
 from .serializers import SubjectSerializer,PublicCourseListSerializer,PublicCourseSerializer
-from .serializers import  CourseSerializer,ManageCourseMinSzr,ModuleSerializer
+from .serializers import  CourseSerializer,ManageCourseMinSzr,ModuleSerializer,ContentSerializer
 from .serializers import  TextSerializer,ImageSerializer,FileSerializer,VideoSerializer
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
@@ -239,7 +239,6 @@ class ManageModuleDetail(APIView):
     
     def put(self, request,id=None,*args, **kwargs):
         # update
-        #test whether the course is persisting or changing
         try:
             module = Module.objects.get(id=id,course__user=request.user)
         except ObjectDoesNotExist:
@@ -260,7 +259,7 @@ class ManageModuleDetail(APIView):
         serializer.save()
         return Response(serializer.data,status=status.HTTP_206_PARTIAL_CONTENT)
     
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request,id=None, *args, **kwargs):
         #delete
         try:
             module = Module.objects.get(id=id,course__user=request.user)
@@ -287,14 +286,19 @@ class ManageContentList(APIView):
             module = Module.objects.get(id=module_id,course__user = request.user)
         except ObjectDoesNotExist:
             return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
-        module_szr = ModuleSerializer(module)
         module_szr = ModuleSerializer(module).data.copy()
         module_szr.pop('contents')
         content_count = module_szr.pop('content_count')
         contents = []
+        for content in module.contents.all():
+            szr = content_serializer[content.item._meta.model_name](content.item)
+            item_data= szr.data.copy()
+            item_data['content_order'] = content.order
+            contents.append(item_data)
         output = {}
-        output['module'] = module_szr.data
+        output['module'] = module_szr
         output['contents'] = contents
+        output['content_count'] = content_count
         return Response(output,status=status.HTTP_200_OK)
     
     def post(self, request,module_id=None,content_type=None, *args, **kwargs):
@@ -304,19 +308,17 @@ class ManageContentList(APIView):
             return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
         if content_type not in ('text','image','file','video'):
             return Response({'detail':"Need Content type in parameter.Options:('text','image','file','video')."},status=status.HTTP_400_BAD_REQUEST)
-        module_szr = ModuleSerializer(module)
         data = request.data
         if request.FILES:
-            data = {**request.data,**request.FILES}
+            data = {**request.data.dict(),**request.FILES.dict()}
         serializer = content_serializer[content_type](data=data)
         serializer.is_valid(raise_exception=True)
         item = serializer.save(owner=request.user)
         content = Content(module=module,item=item)
         content.save()
-        output = {}
-        output['module'] = module_szr.data
-        output['content'] = serializer.data
-        return Response(output,status=status.HTTP_201_CREATED)
+        item_data= serializer.data.copy()
+        item_data['content_order'] = content.order
+        return Response(item_data,status=status.HTTP_201_CREATED)
 
 class ManageContentDetail(APIView):
     permission_classes = [IsTeacher]
@@ -335,10 +337,14 @@ class ManageContentDetail(APIView):
             return Response({'detail':'Content does not exist.'},status=status.HTTP_404_NOT_FOUND)
         data = request.data
         if request.FILES:
-            data = {**request.data,**request.FILES}
-        serializer = content_serializer[content_type](data=data)
+            data = {**request.data.dict(),**request.FILES.dict()}
+        serializer = content_serializer[content_type](data=data,instance=item)
         serializer.is_valid(raise_exception=True)
-        item = serializer.save(owner=request.user)
-        output = {}
-        output['content'] = serializer.data
-        return Response(output,status=status.HTTP_205_RESET_CONTENT)        serializer.save()
+        serializer.save()
+        item_data= serializer.data.copy()
+        item_data['content_order'] = item.content.order
+        return Response(item_data,status=status.HTTP_205_RESET_CONTENT)
+
+
+    def delete(self, request,content_type=None,id=None, *args, **kwargs):
+        pass
