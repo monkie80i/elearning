@@ -1,3 +1,4 @@
+from urllib import response
 from .serializers import SubjectSerializer,ModuleSerializer,ContentSerializer
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -1095,3 +1096,31 @@ class ManageContentTestCase(MyTestCase):
         #print(x)
         b = Content.objects.filter(content_type=x,module=module).first()
         self.assertEqual(c1,b)
+
+    def make_delete_req(self,content_type,content_id):
+        resp = self.c.delete(reverse_lazy('api:manage_content_detail',args=[content_type,content_id]))
+        return json.loads(resp.content),resp.status_code
+
+    def test_content_delete(self):
+        module = self.create_module(title='Module 101',course=self.course1)
+        c1 = self.create_text_content(module,'my fTest')
+        module = self.create_module(title='Module 101',course=self.course1)
+        #preparing data
+        content_types = ['text','image','file','video']
+        creation_functions = [self.create_text_content,self.create_image_content,self.create_file_content,self.create_video_content]
+        create_content = dict(zip(content_types,creation_functions))
+        contents = { i:create_content[i](module) for i in content_types }
+        resp = self.c.get(reverse_lazy('api:manage_content_list',args=[module.id]))
+        first_cl = json.loads(resp.content)['contents']
+        self.assertEqual(len(first_cl),module.contents.count())
+        #print(contents)
+        for item in contents.items():
+            type,c = item
+            resp,code = self.make_delete_req(type,c.id)
+            #print(resp,code)
+        resp = self.c.get(reverse_lazy('api:manage_content_list',args=[module.id]))
+        last_cl = json.loads(resp.content)['contents']
+        self.assertEqual(len(last_cl),module.contents.count())
+
+
+        
