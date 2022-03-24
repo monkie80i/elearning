@@ -384,4 +384,13 @@ class StudentViewSet(PaginateNewMIxin,viewsets.ViewSet):
         serializer = CourseMinSzr(courses,many=True)
         self.output['courses'] = serializer.data.copy()
         return Response(self.output,status=status.HTTP_200_OK)
+    
+    def course_detail(self,request,id=None,*args, **kwargs):
+        try:
+            course = self.get_queryset(request).get(id=id)
+        except ObjectDoesNotExist:
+            return Response({'detail':'Course does not exist.'},status=status.HTTP_404_NOT_FOUND)
+        serializer = CourseSerializer(course)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+
 

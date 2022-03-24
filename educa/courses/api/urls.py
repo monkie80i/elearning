@@ -29,4 +29,5 @@ urlpatterns = [
     path('manage/content/<str:content_type>/<int:id>/',ManageContentDetail.as_view(),name='manage_content_detail'),
     path('enrolled/courses/',StudentViewSet.as_view({'get':'list_enrolled'}),name='enrolled_course_list'),
     path('enrolled/courses/<int:page_number>/',StudentViewSet.as_view({'get':'list_enrolled'}),name='enrolled_course_list_page'),
+    path('enrolled/course/<int:id>/',StudentViewSet.as_view({'get':'course_detail'}),name='enrolled_course_detail'),
 ]
