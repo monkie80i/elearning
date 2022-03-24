@@ -30,4 +30,5 @@ urlpatterns = [
     path('enrolled/courses/',StudentViewSet.as_view({'get':'list_enrolled'}),name='enrolled_course_list'),
     path('enrolled/courses/<int:page_number>/',StudentViewSet.as_view({'get':'list_enrolled'}),name='enrolled_course_list_page'),
     path('enrolled/course/<int:id>/',StudentViewSet.as_view({'get':'course_detail'}),name='enrolled_course_detail'),
+    path('enrolled/course/module/<int:id>/',StudentViewSet.as_view({'get':'module_content_list'}),name='enrolled_module_detail'),
 ]

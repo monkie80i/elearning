@@ -39,6 +39,12 @@ def serializer_content(content):
     item_data= szr.data.copy()
     content_szr['item'] = item_data
     return content_szr
+
+def render_content(content):
+    content_szr = ContentSerializer(content).data.copy()
+    item_data= content.item.render()
+    content_szr['item'] = item_data
+    return content_szr
 #helper classes
 class PaginateViewSetMixin(object):
     page_size = 3
@@ -392,4 +398,21 @@ class StudentViewSet(PaginateNewMIxin,viewsets.ViewSet):
         serializer = CourseSerializer(course)
         return Response(serializer.data,status=status.HTTP_200_OK)
 
-
+    def module_content_list(self,request,id=None,*args, **kwargs):
+        try:
+            module = self.get_queryset(request).filter(module__id=id)
+        except ObjectDoesNotExist:
+            return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
+        module_szr = ModuleSerializer(module).data.copy()
+        module_szr.pop('contents')
+        content_count = module_szr.pop('content_count')
+        contents = []
+        for content in module.contents.all():
+            content_szr = serializer_content(content)
+            contents.append(content_szr)
+        output = {}
+        output['module'] = module_szr
+        output['contents'] = contents
+        output['content_count'] = content_count
+        return Response(output,status=status.HTTP_200_OK)
+        
