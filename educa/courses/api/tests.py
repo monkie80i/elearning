@@ -1,17 +1,25 @@
-from urllib import response
 from .serializers import SubjectSerializer,ModuleSerializer,ContentSerializer
 from django.test import TestCase
 from rest_framework.test import APIClient
 from ..models import Subject,Course,Module,Content,Text,Image,Video,File
 from adminManager.models import User
-import json
+import json,base64,random,math,os
 from django.urls import reverse_lazy
-import random
-import math,os
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from django.test.client import BOUNDARY, MULTIPART_CONTENT, encode_multipart
 from django.contrib.contenttypes.models import ContentType
+
+def create_some_subjects():
+    subjects = ['science','english','math','python',]
+    for sub in subjects:
+        s = Subject(title=sub.capitalize(),slug=sub)
+        s.save()
+    return Subject.objects.all()
+
+def create_basic_auth_token(username,password):
+        string = f'{username}:{password}'
+        return base64.b64encode(string.encode()).decode()
 
 
 class SubjectTestCase(TestCase):
@@ -1122,5 +1130,95 @@ class ManageContentTestCase(MyTestCase):
         last_cl = json.loads(resp.content)['contents']
         self.assertEqual(len(last_cl),module.contents.count())
 
+class StudentViewTestCase(TestCase):
+
+    def setUp(self):
+        subjects = ['science','english','math','python',]
+        for sub in subjects:
+            s = Subject(title=sub.capitalize(),slug=sub)
+            s.save()
+        self.c = APIClient()
+
+        users = [
+            {   
+                'name':'teacher1',
+                'password':'teacher1234',
+                'is_teacher':True,
+                'is_student':False,
+
+            },
+            {   
+                'name':'student1',
+                'password':'student1234',
+                'is_teacher':False,
+                'is_student':True,
+            }
+        ]
+        for user in users:
+            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
+            u.set_password(user['password'])
+            u.save()
+        all_users = User.objects.all()
+        teacher = all_users.filter(is_teacher=True).first()
+        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
+        all_subects = Subject.objects.all()
+        self.subjects = all_subects
+        content = """
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo."""
+        for i in range(1,54):
+            c = Course(
+                title=f'Course {i}',
+                overview=content,
+                user = teacher,
+                subject=random.choice(all_subects)
+            )
+            c.save()
+        self.total_pages = math.ceil(Course.objects.filter(user=teacher).count()/5)
+        print('total_pages',self.total_pages)
+        self.student1 = User.objects.get(username='student1')
 
         
+
+    def test_list_enrolled_courses_view(self):
+        courses = list(set(random.choices(Course.objects.all(),k=10)))
+        c_id = { int(c.id) for c in courses }
+        for c in courses:
+            c.students.add(self.student1)
+        course_ids = { int(c.id) for c in self.student1.courses_joined.all() }
+        print(set.difference(c_id,course_ids))
+        basic_auth_token = create_basic_auth_token('student1','student1234')
+        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+
+        resp = self.c.get(reverse_lazy('api:enrolled_course_list'))
+        cont = json.loads(resp.content)
+        resp_course_ids = { int(c["id"]) for c in cont['courses']}
+        print('diff',set.difference(course_ids,resp_course_ids))
+        self.assertEqual(set.difference(course_ids,resp_course_ids),set())
+        #print(json.dumps(cont,indent=4),resp.status_code)"""
+
+    def test_list_enrolled_courses_view_paginate(self):
+        courses = list(set(random.choices(Course.objects.all(),k=23)))
+        for c in courses:
+            c.students.add(self.student1)
+        length = self.student1.courses_joined.count()+1
+        total_pages = math.ceil(length/5)
+        last_page_count = length%total_pages
+
+        basic_auth_token = create_basic_auth_token('student1','student1234')
+        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+
+        #first page
+        resp = self.c.get(reverse_lazy('api:enrolled_course_list_page',args=[1]))
+        cont = json.loads(resp.content)
+        #print(json.dumps(cont,indent=4),resp.status_code)
+        self.assertEqual(cont['total_pages'],total_pages)
+        self.assertEqual(cont['page_number'],1)
+
+
+        resp = self.c.get(reverse_lazy('api:enrolled_course_list_page',args=[total_pages]))
+        cont = json.loads(resp.content)
+        #print(json.dumps(cont,indent=4),resp.status_code)
+        self.assertEqual(len(cont['courses']),last_page_count)
+        self.assertEqual(cont['page_number'],total_pages)
+        #print(json.dumps(cont,indent=4),resp.status_code)"""
+

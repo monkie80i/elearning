@@ -1,18 +1,16 @@
-from http.client import NotConnected
 import math
-from urllib import response
-from webbrowser import get
 from rest_framework import viewsets,status
+from rest_framework.decorators import action
 from rest_framework.views import APIView
 from ..models import Subject,Course,Module,Content
 from .serializers import SubjectSerializer,PublicCourseListSerializer,PublicCourseSerializer
 from .serializers import  CourseSerializer,ManageCourseMinSzr,ModuleSerializer,ContentSerializer
-from .serializers import  TextSerializer,ImageSerializer,FileSerializer,VideoSerializer
+from .serializers import  TextSerializer,ImageSerializer,FileSerializer,VideoSerializer,CourseMinSzr
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 from utils.helpers import get_object_or_404_json
 from django.shortcuts import get_object_or_404
-from .permissions import IsTeacher
+from .permissions import IsStudent, IsTeacher
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import APIException,NotFound,PermissionDenied
 from django.apps import apps
@@ -365,3 +363,25 @@ class ManageContentDetail(APIView):
         except Exception as e:
             return Response({'detail':e},status=status.HTTP_409_CONFLICT)
         return Response({'detail':'Module deleted'},status=status.HTTP_200_OK)
+
+#student views
+class StudentViewSet(PaginateNewMIxin,viewsets.ViewSet):
+    permission_classes = [IsStudent]
+    queryset = None
+    page_size = 5
+    output = {}
+    
+    def is_enrolled_to_course(student,course_id):
+        return student.courses_joined.filter(id=course_id).exists()
+
+    def get_queryset(self,request):
+        return Course.objects.filter(students__in = [request.user])
+
+    @action(detail=False, methods=['get'])
+    def list_enrolled(self, request, *args, **kwargs):
+        self.queryset = self.get_queryset(request)
+        courses = self.paginate(*args, **kwargs)
+        serializer = CourseMinSzr(courses,many=True)
+        self.output['courses'] = serializer.data.copy()
+        return Response(self.output,status=status.HTTP_200_OK)
+
