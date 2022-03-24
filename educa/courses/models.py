@@ -1,5 +1,6 @@
 from distutils.archive_util import make_zipfile
 from pyexpat import model
+import re
 from django.db import models
 from adminManager.models import User
 from .fields import OrderField
@@ -52,7 +53,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 
 class Content(models.Model):
     module = models.ForeignKey(Module,related_name='contents',on_delete=models.CASCADE,null=True,blank=True)
-    content_type = models.ForeignKey(ContentType,on_delete=models.CASCADE,limit_choices_to={'model__in':('text','image','file','video')},null=True,blank=True)
+    content_type = models.ForeignKey(ContentType,on_delete=models.CASCADE,related_name='content',limit_choices_to={'model__in':('text','image','file','video')},null=True,blank=True)
     object_id = models.PositiveIntegerField(null=True,blank=True)
     item = GenericForeignKey('content_type','object_id')
     order = OrderField(blank=True,for_field='module')

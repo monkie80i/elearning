@@ -9,6 +9,9 @@ import random
 import math,os
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
+from django.test.client import BOUNDARY, MULTIPART_CONTENT, encode_multipart
+from django.contrib.contenttypes.models import ContentType
+
 
 class SubjectTestCase(TestCase):
     def setUp(self):
@@ -985,8 +988,8 @@ class ManageContentTestCase(MyTestCase):
         ser = ModuleSerializer(m)
         resp = self.c.get(reverse_lazy('api:manage_content_list',args=[m.id]))
         response = json.loads(resp.content)
-        self.assertEqual(resp.statuse_code,200)
-        #print(json.dumps(response,indent=4),resp.status_code)
+        self.assertEqual(resp.status_code,200)
+        print(json.dumps(response,indent=4),resp.status_code)
     
     def test_content_text_create(self):
         module = self.create_module(title='Module 101',course=self.course1)
@@ -1004,7 +1007,6 @@ class ManageContentTestCase(MyTestCase):
     def test_content_all_create(self):
         module = self.create_module(title='Module 101',course=self.course1)
         #preparing data
-        from django.test.client import BOUNDARY, MULTIPART_CONTENT, encode_multipart
         image = self.get_default_image_path()
         file = self.get_default_file_path()
         text_data = {
@@ -1059,7 +1061,37 @@ class ManageContentTestCase(MyTestCase):
         #print(json.dumps(response,indent=4),resp.status_code)
         self.assertEqual(my_contents,response2["contents"])
 
-    def test_open_file(self):
-        fp = settings.BASE_DIR / 'test_medias' / 'image.jpg'
-        #os.path.join(fp.resolve())
-        fp.read_bytes()
+    def test_content_update_file(self):
+        module = self.create_module(title='Module 101',course=self.course1)
+        content = self.create_file_content(module,'my file')
+        data = encode_multipart(BOUNDARY,{
+            'file':self.get_default_image_path()
+        })
+        resp = self.c.put(reverse_lazy('api:manage_content_detail',args=['file',content.object_id]),data=data,content_type=MULTIPART_CONTENT)
+        response_file = json.loads(resp.content)
+        #print(response_file,resp.status_code)
+        self.assertNotEqual(content.item.file.url,response_file['item']['file'])
+        #print(json.dumps(response_file,indent=4),resp.status_code)
+
+    def test_content_update_text(self):
+        module = self.create_module(title='Module 101',course=self.course1)
+        content1 = self.create_text_content(module,'my fTest')
+        content = TextSerializer(content1).data.copy()
+        print(content1)
+        data ={
+            'content':'New Contest herre'
+        }
+        resp = self.c.put(reverse_lazy('api:manage_content_detail',args=['text',content1.id]),data=data)
+        response_file = json.loads(resp.content)
+        #print(response_file,resp.status_code)
+        self.assertNotEqual(content['content'],response_file['item']['content'])
+        #print(json.dumps(response_file,indent=4),resp.status_code)
+
+    def test_content_type(self):
+        module = self.create_module(title='Module 101',course=self.course1)
+        c1 = self.create_text_content(module,'my fTest')
+        
+        x = ContentType.objects.get(app_label='courses',model='text')
+        #print(x)
+        b = Content.objects.filter(content_type=x,module=module).first()
+        self.assertEqual(c1,b)

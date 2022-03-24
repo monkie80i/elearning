@@ -201,7 +201,7 @@ class ContentSerializer(serializers.ModelSerializer):
 class ItemSerializer(serializers.ModelSerializer):
     content_type = serializers.CharField(source="_meta.model_name",read_only=True)
     class Meta:
-        exclude = ['created','updated']
+        exclude = ['id','created','updated']
 
 class TextSerializer(ItemSerializer):
     class Meta(ItemSerializer.Meta):

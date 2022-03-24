@@ -16,6 +16,7 @@ from .permissions import IsTeacher
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import APIException,NotFound,PermissionDenied
 from django.apps import apps
+from django.contrib.contenttypes.models import ContentType
 
 #helper functions
 def has_subject_slug_in_parameter(*args, **kwargs):
@@ -33,6 +34,13 @@ def filter_course_by_subject(qs,subject_slug):
     else:
         raise NotFound(detail="Subject doesnot exist",code = status.HTTP_404_NOT_FOUND)
     return qs  
+
+def serializer_content(content):
+    content_szr = ContentSerializer(content).data.copy()
+    szr = content_serializer[content.item._meta.model_name](content.item)
+    item_data= szr.data.copy()
+    content_szr['item'] = item_data
+    return content_szr
 #helper classes
 class PaginateViewSetMixin(object):
     page_size = 3
@@ -291,10 +299,8 @@ class ManageContentList(APIView):
         content_count = module_szr.pop('content_count')
         contents = []
         for content in module.contents.all():
-            szr = content_serializer[content.item._meta.model_name](content.item)
-            item_data= szr.data.copy()
-            item_data['content_order'] = content.order
-            contents.append(item_data)
+            content_szr = serializer_content(content)
+            contents.append(content_szr)
         output = {}
         output['module'] = module_szr
         output['contents'] = contents
@@ -316,9 +322,8 @@ class ManageContentList(APIView):
         item = serializer.save(owner=request.user)
         content = Content(module=module,item=item)
         content.save()
-        item_data= serializer.data.copy()
-        item_data['content_order'] = content.order
-        return Response(item_data,status=status.HTTP_201_CREATED)
+        content_szr = serializer_content(content)
+        return Response(content_szr,status=status.HTTP_201_CREATED)
 
 class ManageContentDetail(APIView):
     permission_classes = [IsTeacher]
@@ -332,19 +337,31 @@ class ManageContentDetail(APIView):
         if content_type not in ('text','image','file','video'):
             return Response({'detail':"Need Content type in parameter.Options:('text','image','file','video')."},status=status.HTTP_400_BAD_REQUEST)
         try:
-            item = self.get_model(content_type).objects.get(id=id,owner = request.user)
+            content_type_object = ContentType.objects.get(app_label='courses',model=content_type)
+            content = Content.objects.get(id=id,module__course__user=request.user,content_type=content_type_object)
         except ObjectDoesNotExist:
             return Response({'detail':'Content does not exist.'},status=status.HTTP_404_NOT_FOUND)
         data = request.data
         if request.FILES:
             data = {**request.data.dict(),**request.FILES.dict()}
-        serializer = content_serializer[content_type](data=data,instance=item)
+        serializer = content_serializer[content_type](data=data,instance=content.item)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        item_data= serializer.data.copy()
-        item_data['content_order'] = item.content.order
-        return Response(item_data,status=status.HTTP_205_RESET_CONTENT)
+        content_szr = serializer_content(content)
+        return Response(content_szr,status=status.HTTP_205_RESET_CONTENT)
 
 
     def delete(self, request,content_type=None,id=None, *args, **kwargs):
-        pass
+        if content_type not in ('text','image','file','video'):
+            return Response({'detail':"Need Content type in parameter.Options:('text','image','file','video')."},status=status.HTTP_400_BAD_REQUEST)
+        try:
+            content_type_object = ContentType.objects.get(app_label='courses',model=content_type)
+            content = Content.objects.get(id=id,module__course__user=request.user,content_type=content_type_object)
+        except ObjectDoesNotExist:
+            return Response({'detail':'Content does not exist.'},status=status.HTTP_404_NOT_FOUND)
+        try:
+            content.item.delete()
+            content.delete()
+        except Exception as e:
+            return Response({'detail':e},status=status.HTTP_409_CONFLICT)
+        return Response({'detail':'Module deleted'},status=status.HTTP_200_OK)
