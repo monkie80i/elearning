@@ -377,7 +377,6 @@ class StudentViewSet(PaginateNewMIxin,viewsets.ViewSet):
     def get_queryset(self,request):
         return Course.objects.filter(students__in = [request.user])
 
-    @action(detail=False, methods=['get'])
     def list_enrolled(self, request, *args, **kwargs):
         self.queryset = self.get_queryset(request)
         courses = self.paginate(*args, **kwargs)
