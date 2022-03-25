@@ -400,7 +400,7 @@ class StudentViewSet(PaginateNewMIxin,viewsets.ViewSet):
 
     def module_content_list(self,request,id=None,*args, **kwargs):
         try:
-            module = self.get_queryset(request).filter(module__id=id)
+            module = Module.objects.get(id=id,course__students__in=[request.user])
         except ObjectDoesNotExist:
             return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
         module_szr = ModuleSerializer(module).data.copy()
