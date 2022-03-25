@@ -1130,7 +1130,7 @@ class ManageContentTestCase(MyTestCase):
         last_cl = json.loads(resp.content)['contents']
         self.assertEqual(len(last_cl),module.contents.count())
 
-class StudentViewTestCase(TestCase):
+class StudentViewTestCase(MyTestCase):
 
     def setUp(self):
         subjects = ['science','english','math','python',]
@@ -1160,6 +1160,7 @@ class StudentViewTestCase(TestCase):
             u.save()
         all_users = User.objects.all()
         teacher = all_users.filter(is_teacher=True).first()
+        self.teacher = teacher
         self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
         all_subects = Subject.objects.all()
         self.subjects = all_subects
@@ -1221,4 +1222,38 @@ class StudentViewTestCase(TestCase):
         self.assertEqual(len(cont['courses'])-1,last_page_count)
         self.assertEqual(cont['page_number'],total_pages)
         #print(json.dumps(cont,indent=4),resp.status_code)"""
+    
+    def test_enrolled_detail(self):
+        course = random.choice(Course.objects.all())
+        module = self.create_module(title='My Mod',course=course)
 
+        course.students.add(self.student1)
+        basic_auth_token = create_basic_auth_token('student1','student1234')
+        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+
+        resp = self.c.get(reverse_lazy('api:enrolled_course_detail',args=[course.id]))
+        response = json.loads(resp.content)
+        print(response,resp.status_code)
+        self.assertEqual(resp.status_code,200)
+    
+    def test_module_content_list(self):
+        course = random.choice(Course.objects.all())
+        module = self.create_module(title='My Mod',course=course)
+        for i in range(5):
+            self.create_text_content(module=module,title =f'Content {i}')
+        course.students.add(self.student1)
+
+        basic_auth_token = create_basic_auth_token('student1','student1234')
+        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+
+        resp = self.c.get(reverse_lazy('api:enrolled_module_detail',args=[module.id]))
+        response = json.loads(resp.content)
+        print(response,resp.status_code)
+        self.assertEqual(resp.status_code,200)
+    
+    def test_a_query(self):
+        course = random.choice(Course.objects.all())
+        module = self.create_module(title='My Mod',course=course)
+        for i in range(5):
+            self.create_text_content(module=module,title =f'Content {i}')
+        module = Module.objects.get(id=id,course__students__in=[self.student1])
