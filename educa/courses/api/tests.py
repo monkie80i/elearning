@@ -9,79 +9,261 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from django.test.client import BOUNDARY, MULTIPART_CONTENT, encode_multipart
 from django.contrib.contenttypes.models import ContentType
+from .serializers import  TextSerializer,ImageSerializer,FileSerializer,VideoSerializer
+
+
+content_serializer = {
+    'text': TextSerializer,
+    'image': ImageSerializer,
+    'file': FileSerializer,
+    'video':VideoSerializer
+}
+
+#helper functions
 
 def create_some_subjects():
-    subjects = ['science','english','math','python',]
+    """
+    create some subjects :['science','english','math','python']
+    """
+    subjects = ['science','english','math','python']
     for sub in subjects:
         s = Subject(title=sub.capitalize(),slug=sub)
         s.save()
     return Subject.objects.all()
 
 def create_basic_auth_token(username,password):
-        string = f'{username}:{password}'
-        return base64.b64encode(string.encode()).decode()
+    """
+    create base64 encoded string of 'username:password'
+    """
+    string = f'{username}:{password}'
+    return base64.b64encode(string.encode()).decode()
 
+def create_basic_auth_header(username,password):
+    """
+    create the teaxt part of the http request authorization haeder of the form:
+    "Basic sjflkdjflskfjlskdjfsd"
+    with provided creds
+    """
+    tkn = create_basic_auth_token(username,password)
+    return f'Basic {tkn}'
+
+def create_user(username,password):
+    """
+    create a user with the provided username and passwrod
+    """
+    user = User(username=username)
+    user.set_password(password)
+    user.save()
+    return user
+
+def create_admin_user():
+    user = create_user('admin','admin')
+    user.is_superuser=True
+    user.save()
+    return user
+
+def create_teacher(username,password):
+    user = create_user(username,password)
+    user.is_teacher=True
+    user.save()
+    return user
+
+def create_student(username,password):
+    user = create_user(username,password)
+    user.is_student=True
+    user.save()
+    return user
+
+def create_three_users():
+    """create 3 users:
+            username    password    status
+        ----------------------------------------
+        1.  admin       admin       is_superuser
+        2.  teacher1    teacher1234 is_teacher
+        3.  student1    student1234 is_student
+    """
+    admin = create_admin_user()
+    teacher1 = create_teacher('teacher1','teacher1234')
+    student1 = create_student('student1','student1234')
+    return admin,teacher1,student1
+
+
+class MyTestCase(TestCase):
+
+    lorem = """
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo.
+        """
+
+    def get_default_image(self):
+        fp = settings.BASE_DIR / 'test_medias' / 'image.jpg'
+        return os.fspath(fp.resolve())
+
+    def get_default_image_path(self):
+        return SimpleUploadedFile(self.get_default_image(), b"file_content", content_type="image/jpg")
+
+    def get_default_file(self):
+        fp = settings.BASE_DIR / 'test_medias' / 'file.scss'
+        return os.fspath(fp.resolve())
+    
+    def get_default_file_path(self):
+        return SimpleUploadedFile(self.get_default_file(), b"file_content", content_type="text/scss")
+
+    def get_default_url(self):
+        return 'https://www.google.com'
+
+    def create_course(self,owner,title=None,content=None,subject=None):
+        if title is None:
+            title='Course 1'
+        if content is None:
+            content = self.lorem[:20]
+        if subject is None:
+            subject= random.choice(Subject.objects.all())
+        course = Course(
+            title=title,
+            overview=content,
+            user = owner,
+            subject=subject
+        )
+        course.save()
+        return course
+
+    def create_module(self,course,title=None,description=None):
+        if title is None:
+            title='Course 1'
+        if description is None:
+            description = self.lorem[:15]
+        module = Module(
+            title=title,
+            description=description,
+            course = course
+        )
+        module.save()
+        return module
+
+    def create_text_content(self,module,title=None,content=None):
+        content_type='text'
+        if title is None:
+            title = "Greeting"
+        if content is None:
+            content = "hai ther How are you"
+        data = {
+            'title':title,
+            'content':content
+        }
+        serializer = content_serializer[content_type](data=data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save(owner=self.teacher)
+        #print(serializer.data)
+        #print(type(instance))
+        content = Content(module=module,item=instance)
+        content.save()
+        return content
+    
+    def create_image_content(self,module,title=None,file_name=None):
+        #print(self.module.contents.all())
+        content_type='image'
+        if title is None:
+            title = "My Image"
+        if file_name is None:
+            file_name = self.get_default_image()
+        image = SimpleUploadedFile(file_name, b"file_content", content_type="video/mp4")
+        content_type='image'
+        data = {
+            'title':title,
+            'file':image
+        }
+        serializer = content_serializer[content_type](data=data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save(owner=self.teacher)
+        #print(serializer.data)
+        #print(type(instance))  
+        content = Content(module=module,item=instance)
+        content.save()
+        return content
+
+    def create_file_content(self,module,title=None,file_name=None):
+        #print(self.module.contents.all())
+        content_type='file'
+        if title is None:
+            title = "My File"
+        if file_name is None:
+            file_name = self.get_default_file()
+        #print(file_name)
+        file = SimpleUploadedFile(file_name, b"file_content", content_type="video/mp4")
+        data = {
+            'title':title,
+            'file':file
+        }
+        serializer = content_serializer[content_type](data=data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save(owner=self.teacher) 
+        content = Content(module=module,item=instance)
+        content.save()
+        return content
+
+    def create_video_content(self,module,title=None,file_name=None):
+        #print(self.module.contents.all())
+        content_type='video'
+        if title is None:
+            title = "Video 1"
+        if file_name is None:
+            url = self.get_default_url()
+        #print(file_name)
+        data = {
+            'title':title,
+            'url':url
+        }
+        serializer = content_serializer[content_type](data=data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save(owner=self.teacher) 
+        content = Content(module=module,item=instance)
+        content.save()
+        return content
+    
+
+
+# Tests 
 
 class SubjectTestCase(TestCase):
     def setUp(self):
-        subject1 = Subject(title="hindi")
-        subject1.save()
-        subject2 = Subject(title="english")
-        subject2.save()
-        subject3 = Subject(title="math")
-        subject3.save()
+        self.subjects = create_some_subjects()
         self.c = APIClient()
-        user = User(username="admin")
-        user.set_password("admin")
-        user.save()
-
+        self.admin = create_admin_user()
     
     def test_subject_list(self):
         response = self.c.get(reverse_lazy('api:subject_list'))
         self.assertEqual(response.status_code,200)
-        print(json.loads(response.content))
+        resp = json.loads(response.content)
+        res_subs = [s['slug'] for s in resp]
+        subs = [s.slug for s in self.subjects.all()]
+        #print(resp)
+        self.assertEqual(res_subs,subs)
 
     def test_creation_code(self):
         serializer = SubjectSerializer(data={'title':'java'})
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        print(Subject.objects.all())
+        self.assertEqual(Subject.objects.filter(title='java').first().slug,'java')
 
     def test_subject_create(self):
-        data = {'title':'python'}
-        self.c.login(username='admin',password='admin')
+        data = {'title':'Django'}
+        self.c.credentials(HTTP_AUTHORIZATION=create_basic_auth_header('admin','admin'))
         response = self.c.post(reverse_lazy('api:subject_create'),data=data)
-        print(response.content)
-        #print(Subject.objects.get(title='python'))
-        self.assertEqual(Subject.objects.all().filter(title='python').exists(),True)
+        self.assertEqual(response.status_code,201)
+        #print(response.content)
+        #print(Subject.objects.get(title='Django'))
+        self.assertEqual(Subject.objects.all().filter(title='Django').exists(),True)
 
-class PublicCourseListTestCase(TestCase):
+class PublicCourseListTestCase(MyTestCase):
     def setUp(self):
-        subjects = ['science','english','math','python',]
-        for sub in subjects:
-            s = Subject(title=sub.capitalize(),slug=sub)
-            s.save()
+        self.subjects = create_some_subjects()
         self.c = APIClient()
-        users = {'teacher1':'teacher1234','student1':'student1234'}
-        for uname,pwd in users.items():
-            u = User(username=uname)
-            u.set_password(pwd)
-            u.save()
-        all_users = User.objects.all()
-        all_subects = Subject.objects.all()
-        self.subjects = all_subects
-        content = """
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo."""
+        admin,teacher1,student1 = create_three_users()
         for i in range(1,54):
-            c = Course(
+            self.create_course(
+                owner=teacher1,
                 title=f'Course {i}',
-                overview=content,
-                user = random.choice(all_users),
-                subject=random.choice(all_subects)
             )
-            c.save()
-        print('subjects',all_subects)
-        print('users',all_users)
     
     def test_course_list_all(self):
         total_pages = math.ceil(Course.objects.count()/5)
@@ -116,7 +298,7 @@ class PublicCourseListTestCase(TestCase):
         # for first page
         url = reverse_lazy('api:public_course_list_all_page',args=[100])
         response = self.c.get(url)
-        print(response.content)
+        #print(response.content)
         self.assertEqual(response.status_code,406)
 
     def test_course_list_subject(self):
@@ -125,7 +307,7 @@ class PublicCourseListTestCase(TestCase):
         response = self.c.get(url)
         self.assertEqual(response.status_code,200)
         content = json.loads(response.content)
-        print(content)
+        #print(content)
         courses_of_random_subject = Course.objects.filter(subject=random_subject)
         total_pages = math.ceil(courses_of_random_subject.count()/5)
         #self.assertEqual(len(content['courses']),Courses)
@@ -136,7 +318,7 @@ class PublicCourseListTestCase(TestCase):
         # for first page
         url = url = reverse_lazy('api:public_course_list_subject',args=["illegal"])
         response = self.c.get(url)
-        print(response.content)
+        #print(response.content)
         self.assertEqual(response.status_code,404)
     
     def test_course_list_subject_page(self):
@@ -146,7 +328,7 @@ class PublicCourseListTestCase(TestCase):
         response = self.c.get(url)
         self.assertEqual(response.status_code,200)
         content = json.loads(response.content)
-        print(content)
+        #print(content)
         courses_of_random_subject = Course.objects.filter(subject=random_subject)
         total_pages = math.ceil(courses_of_random_subject.count()/5)
         #self.assertEqual(len(content['courses']),Courses)
@@ -160,98 +342,48 @@ class PublicCourseListTestCase(TestCase):
         response = self.c.get(url)
         self.assertEqual(response.status_code,200)
         content = json.loads(response.content)
-        print(content)
+        #print(content)
         self.assertEqual(content['total_pages'],total_pages)
         self.assertEqual(content['page_number'],total_pages)
 
-class PublicCourseDetailTestCase(TestCase):
+class PublicCourseDetailTestCase(MyTestCase):
     def setUp(self):
-        subjects = ['science','english','math','python',]
-        for sub in subjects:
-            s = Subject(title=sub.capitalize(),slug=sub)
-            s.save()
+        self.subjects = create_some_subjects()
         self.c = APIClient()
-        users = {'teacher1':'teacher1234','student1':'student1234'}
-        for uname,pwd in users.items():
-            u = User(username=uname)
-            u.set_password(pwd)
-            u.save()
-        all_users = User.objects.all()
-        all_subects = Subject.objects.all()
-        self.subjects = all_subects
-        content = """
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo."""
-        course = Course(title="Python 101",overview=content,subject = all_subects.filter(slug='python').first(),user=random.choice(all_users))
+        admin,teacher1,student1 = create_three_users()
+        course = self.create_course(
+                owner=teacher1,
+                title='Python 101',
+                subject=self.subjects.get(slug='python')
+            )
         course.save()
         for i in range(1,6):
-            m = Module(title=f'Module {i}',description=content,course=course)
-            m.save()
-        print('subjects',all_subects)
-        print('users',all_users)
+            self.create_module(course,title=f'Module {i}')
         self.course_id = course.id
 
     def test_detail_view(self):
         url = reverse_lazy('api:public_course_detail',args=[self.course_id])
-        print(url)
+        #print(url)
         response = self.c.get(url)
         data = json.loads(response.content)
-        print(data['modules_count'])
+        #print(data['modules_count'])
+        self.assertEqual(response.status_code,200)
 
-        #self.assertEqual(response.status_code,200)
-    
-    """def test_detail_out_of_scope(self):
-        response = self.c.get(reverse_lazy('api:public_course_detail',args=[21]))
-        print(json.loads(response.content))
-        self.assertEqual(response.status_code,404)
-    """
 
-class ManageCourseTestCase(TestCase):
+class ManageCourseTestCase(MyTestCase):
     def setUp(self):
-        subjects = ['science','english','math','python',]
-        for sub in subjects:
-            s = Subject(title=sub.capitalize(),slug=sub)
-            s.save()
+        self.subjects = create_some_subjects()
         self.c = APIClient()
-        
-        users = [
-            {   
-                'name':'teacher1',
-                'password':'teacher1234',
-                'is_teacher':True,
-                'is_student':False,
-
-            },
-            {   
-                'name':'student1',
-                'password':'student1234',
-                'is_teacher':False,
-                'is_student':True,
-            }
-        ]
-        for user in users:
-            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
-            u.set_password(user['password'])
-            u.save()
-        all_users = User.objects.all()
-        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
-        #self.c.session.headers.update({'x-test': 'true'})
-        all_users = User.objects.all()
-        all_subects = Subject.objects.all()
-        self.subjects = all_subects
-        content = """
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo."""
-        course1 = Course(title="Course 1",overview=content,subject = all_subects.filter(slug='python').first(),user=all_users[0])
-        course2 = Course(title="Course 2",overview=content,subject = all_subects.filter(slug='python').first(),user=all_users[0])
-        course1.save()
-        course2.save()
+        admin,teacher1,student1 = create_three_users()
+        self.c.credentials(HTTP_AUTHORIZATION=create_basic_auth_header(teacher1.username,'teacher1234'))
+        python = self.subjects.filter(slug='python').first()
+        course1 = self.create_course(title="Course 1",owner=teacher1,subject=python)
+        course2 = self.create_course(title="Course 2",owner=teacher1,subject=python)
         for i in range(1,6):
-            m = Module(title=f'Module 1.{i}',description=content,course=course1)
-            m.save()
+            self.create_module(course1,title=f'Module 1.{i}')
         for i in range(1,4):
-            m = Module(title=f'Module 2.{i}',description=content,course=course2)
-            m.save()
-        #print('subjects',all_subects)
-        #print('users',all_users)
+            self.create_module(course2,title=f'Module 2.{i}')
+
 
     def test_course_list(self):
         response = self.c.get(reverse_lazy('api:manage_course_list'))
@@ -268,11 +400,7 @@ class ManageCourseTestCase(TestCase):
     
     def test_course_list_not_teacher(self):
         client = APIClient()
-        cred = 'student1:student1234'
-        import base64
-        encoded_cred = base64.b64encode(cred.encode()).decode()
-        print(encoded_cred)
-        client.credentials(HTTP_AUTHORIZATION=f'Basic {encoded_cred}')
+        client.credentials(HTTP_AUTHORIZATION=create_basic_auth_header('student1','student1234'))
         response = client.get(reverse_lazy('api:manage_course_list'))
         data = json.loads(response.content)
         #print(data)
@@ -371,52 +499,17 @@ class ManageCourseTestCase(TestCase):
         #print(json.loads(response.content))
         self.assertEqual(Course.objects.filter(id=1).exists(),False)
 
-class ManageCourseListPaginationTestCase(TestCase):
+class ManageCourseListPaginationTestCase(MyTestCase):
     def setUp(self):
-        subjects = ['science','english','math','python',]
-        for sub in subjects:
-            s = Subject(title=sub.capitalize(),slug=sub)
-            s.save()
+        self.subjects = create_some_subjects()
         self.c = APIClient()
-        
-        users = [
-            {   
-                'name':'teacher1',
-                'password':'teacher1234',
-                'is_teacher':True,
-                'is_student':False,
+        admin,teacher1,student1 = create_three_users()
+        self.c.credentials(HTTP_AUTHORIZATION=create_basic_auth_header(teacher1.username,'teacher1234'))
 
-            },
-            {   
-                'name':'student1',
-                'password':'student1234',
-                'is_teacher':False,
-                'is_student':True,
-            }
-        ]
-        for user in users:
-            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
-            u.set_password(user['password'])
-            u.save()
-        all_users = User.objects.all()
-        teacher = all_users.filter(is_teacher=True).first()
-        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
-        #self.c.session.headers.update({'x-test': 'true'})
-        all_subects = Subject.objects.all()
-        self.subjects = all_subects
-        content = """
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo."""
         for i in range(1,54):
-            c = Course(
-                title=f'Course {i}',
-                overview=content,
-                user = teacher,
-                subject=random.choice(all_subects)
-            )
-            c.save()
-        self.total_pages = math.ceil(Course.objects.filter(user=teacher).count()/5)
-        print('total_pages',self.total_pages)
-        
+            self.create_course(title=f'Course {i}',owner=teacher1)
+        self.total_pages = math.ceil(Course.objects.filter(user=teacher1).count()/5)
+  
 
     def test_course_list(self):
         response = self.c.get(reverse_lazy('api:manage_course_list'))
@@ -445,63 +538,19 @@ class ManageCourseListPaginationTestCase(TestCase):
         self.assertEqual(data['total_pages'],self.total_pages)
         self.assertEqual(data['page_number'],self.total_pages)
 
-from .serializers import  TextSerializer,ImageSerializer,FileSerializer,VideoSerializer
-content_serializer = {
-    'text': TextSerializer,
-    'image': ImageSerializer,
-    'file': FileSerializer,
-    'video':VideoSerializer
-}
 
-class ContentSerializerTestCase(TestCase):
+class ContentSerializerTestCase(MyTestCase):
     def setUp(self):
-        subjects = ['science','english','math','python',]
-        for sub in subjects:
-            s = Subject(title=sub.capitalize(),slug=sub)
-            s.save()
+        self.subjects = create_some_subjects()
         self.c = APIClient()
-        users = [
-            {   
-                'name':'teacher1',
-                'password':'teacher1234',
-                'is_teacher':True,
-                'is_student':False,
-
-            },
-        ]
-        for user in users:
-            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
-            u.set_password(user['password'])
-            u.save()
-        all_users = User.objects.all()
-        teacher = all_users.filter(is_teacher=True).first()
-        self.teacher = teacher
-        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
-        all_subects = Subject.objects.all()
-        self.subjects = all_subects
-        content = """
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-        Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, 
-        on faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. 
-        Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor
-         venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim 
-         sit amet leo."""
-        course = Course(
-            title='Course 1',
-            overview=content,
-            user = teacher,
-            subject=random.choice(all_subects)
-        )
-        course.save()
-        self.module = Module(
-            title="Module 1",
-            description=content,
-            course=course
-        )
-        self.module.save()
+        admin,teacher1,student1 = create_three_users()
+        self.c.credentials(HTTP_AUTHORIZATION=create_basic_auth_header(teacher1.username,'teacher1234'))
+        self.teacher = teacher1
+        course  = self.create_course(teacher1,'Course 1')
+        self.module = self.create_module(title="Module 1",course=course)
     
     def test_create_content_text(self):
-        print(self.module.contents.all())
+        #print(self.module.contents.all())
 
         content_type='text'
         data = {
@@ -511,15 +560,15 @@ class ContentSerializerTestCase(TestCase):
         serializer = content_serializer[content_type](data=data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save(owner=self.teacher)
-        print(serializer.data)
-        print(type(instance))
+        #print(serializer.data)
+        #print(type(instance))
         content = Content(module=self.module,item=instance)
         content.save()
         self.assertEqual(self.module.contents.all()[0].item,instance)
 
     
     def test_create_content_image(self):
-        print(self.module.contents.all())
+        #print(self.module.contents.all())
         image = SimpleUploadedFile(r'C:\Users\ZAHN_PC\Documents\GitHub\Portfolio\egyan_templates\EGYAN_TEMPLATES\assets\images\socreatese.jpg', b"file_content", content_type="video/mp4")
         content_type='image'
         data = {
@@ -529,70 +578,22 @@ class ContentSerializerTestCase(TestCase):
         serializer = content_serializer[content_type](data=data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save(owner=self.teacher)
-        print(serializer.data)
-        print(type(instance))
+        #print(serializer.data)
+        #print(type(instance))
         content = Content(module=self.module,item=instance)
         content.save()
         self.assertEqual(self.module.contents.all()[0].item,instance)
 
-class ManageModuleTestCase(TestCase):
+class ManageModuleTestCase(MyTestCase):
     def setUp(self):
-        subjects = ['science','english','math','python',]
-        for sub in subjects:
-            s = Subject(title=sub.capitalize(),slug=sub)
-            s.save()
+        self.subjects = create_some_subjects()
         self.c = APIClient()
-        users = [
-            {   
-                'name':'teacher1',
-                'password':'teacher1234',
-                'is_teacher':True,
-                'is_student':False,
-
-            },
-        ]
-        for user in users:
-            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
-            u.set_password(user['password'])
-            u.save()
-        all_users = User.objects.all()
-        teacher = all_users.filter(is_teacher=True).first()
-        self.teacher = teacher
-        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
-        all_subects = Subject.objects.all()
-        self.subjects = all_subects
-        content = """
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-        Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, 
-        on faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. 
-        Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor
-         venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim 
-         sit amet leo."""
-        self.course = Course(
-            title='Course 1',
-            overview=content,
-            user = teacher,
-            subject=random.choice(all_subects)
-        )
-        self.course.save()
+        admin,teacher1,student1 = create_three_users()
+        self.c.credentials(HTTP_AUTHORIZATION=create_basic_auth_header(teacher1.username,'teacher1234'))
+        self.teacher = teacher1
+        self.course = self.create_course(teacher1,'Course 1')
+        self.module = self.create_module(title='Module 1',course = self.course)
     
-    def create_text_content(self,module,title=None,content=None):
-        content_type='text'
-        if title is None:
-            title = "Greeting"
-        if content is None:
-            content = "hai ther How are you"
-        data = {
-            'title':title,
-            'content':content
-        }
-        serializer = content_serializer[content_type](data=data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save(owner=self.teacher)
-        #print(serializer.data)
-        #print(type(instance))
-        content = Content(module=module,item=instance)
-        content.save()
 
     def test_module_create(self):
         data = {
@@ -619,7 +620,7 @@ class ManageModuleTestCase(TestCase):
         }
         resp = self.c.post(reverse_lazy('api:manage_module_create',args=[self.course.id]),data=data)
         response2 = json.loads(resp.content)
-        self.assertEqual(response1.order+1,response2.order)
+        self.assertEqual(response1['order']+1,response2['order'])
     
     def test_module_create_wrong_key(self):
         data = {
@@ -632,293 +633,103 @@ class ManageModuleTestCase(TestCase):
         self.assertEqual(400,resp.status_code)
     
     def test_module_detail(self):
-        module = Module(
-            title='Module 1',
-            description="Lorem",
-            course = self.course
-        )
-        module.save()
-        self.create_text_content(module,title='Hello 1',content="Do well")
-        self.create_text_content(module,title='Hello 2',content="Do well")
-        self.create_text_content(module,title='Hello 3',content="Do well")
-        resp = self.c.get(reverse_lazy('api:manage_module_detail',args=[module.id]))
+        self.create_text_content(self.module,title='Hello 1',content="Do well")
+        self.create_text_content(self.module,title='Hello 2',content="Do well")
+        self.create_text_content(self.module,title='Hello 3',content="Do well")
+        resp = self.c.get(reverse_lazy('api:manage_module_detail',args=[self.module.id]))
         response = json.loads(resp.content)
-        print(response,resp.status_code)
+        #print(response,resp.status_code)
     
     def test_module_update(self):
-        module = Module(
-            title='Module 1',
-            description="Lorem",
-            course = self.course
-        )
-        module.save()
         data = {
             'title':'Module 2',
             'description':'NOt lorem'
         }
-        resp = self.c.put(reverse_lazy('api:manage_module_detail',args=[module.id]),data=data)
+        resp = self.c.put(reverse_lazy('api:manage_module_detail',args=[self.module.id]),data=data)
         response = json.loads(resp.content)
         #print(response,resp.status_code)
-        module = Module.objects.get(id=module.id)
+        module = Module.objects.get(id=self.module.id)
         self.assertEqual(module.title,data['title'])
     
     def test_module_update_with_insufficient_data(self):
-        module = Module(
-            title='Module 1',
-            description="Lorem",
-            course = self.course
-        )
-        module.save()
         data = {
             'title':'Module 2',
             'descriptio':'NOt lorem'
         }
-        resp = self.c.put(reverse_lazy('api:manage_module_detail',args=[module.id]),data=data)
+        resp = self.c.put(reverse_lazy('api:manage_module_detail',args=[self.module.id]),data=data)
         response = json.loads(resp.content)
-        print(response,resp.status_code)
+        #print(response,resp.status_code)
         #module = Module.objects.get(id=module.id)
         self.assertEqual(resp.status_code,400)
         
     def test_module_partial_update(self):
-        module = Module(
-            title='Module 1',
-            description="Lorem",
-            course = self.course
-        )
-        module.save()
         data = {
             'title':'Module 2',
         }
-        resp = self.c.patch(reverse_lazy('api:manage_module_detail',args=[module.id]),data=data)
+        resp = self.c.patch(reverse_lazy('api:manage_module_detail',args=[self.module.id]),data=data)
         response = json.loads(resp.content)
         #print(response,resp.status_code)
         #module = Module.objects.get(id=module.id)
-        self.assertEqual(module.title,data['title'])
+        self.assertNotEqual(self.module.title,data['title'])
         self.assertEqual(resp.status_code,206)
 
 
     def test_module_delete(self):
-        module = Module(
-            title='Module 1',
-            description="Lorem",
-            course = self.course
-        )
-        module.save()
-        resp = self.c.delete(reverse_lazy('api:manage_module_detail',args=[module.id]))
+        resp = self.c.delete(reverse_lazy('api:manage_module_detail',args=[self.module.id]))
         response = json.loads(resp.content)
-        print(response,resp.status_code)
+        #print(response,resp.status_code)
 
     def test_module_with_content_delete(self):
-        module = Module(
-            title='Module 1',
-            description="Lorem",
-            course = self.course
-        )
-        module.save()
-        self.create_text_content(module,title='Hello 1',content="Do well")
-        self.create_text_content(module,title='Hello 2',content="Do well")
-        self.create_text_content(module,title='Hello 3',content="Do well")
-        ser = ModuleSerializer(module)
+        self.create_text_content(self.module,title='Hello 1',content="Do well")
+        self.create_text_content(self.module,title='Hello 2',content="Do well")
+        self.create_text_content(self.module,title='Hello 3',content="Do well")
+        ser = ModuleSerializer(self.module)
         #print(ser.data)
-        resp = self.c.delete(reverse_lazy('api:manage_module_detail',args=[module.id]))
+        resp = self.c.delete(reverse_lazy('api:manage_module_detail',args=[self.module.id]))
         response = json.loads(resp.content)
         #print(response,resp.status_code)
         self.assertEqual(resp.status_code,200)
 
-#test serializer for each item type
-#test serializer for each item type with less fields,without partial
-#test serializer for each item type with less fields,with partial
-#test api end point for each item type,with less fields
-#check if after updatio of item, the user is still there or not and also the content
-class MyTestCase(TestCase):
 
-    def get_default_image(self):
-        fp = settings.BASE_DIR / 'test_medias' / 'image.jpg'
-        return os.fspath(fp.resolve())
-
-    def get_default_image_path(self):
-        return SimpleUploadedFile(self.get_default_image(), b"file_content", content_type="image/jpg")
-
-    def get_default_file(self):
-        fp = settings.BASE_DIR / 'test_medias' / 'file.scss'
-        return os.fspath(fp.resolve())
-    
-    def get_default_file_path(self):
-        return SimpleUploadedFile(self.get_default_file(), b"file_content", content_type="text/scss")
-
-    def get_default_url(self):
-        return 'https://www.google.com'
-
-    def creat_course(self,owner,title=None,content=None):
-        if title is None:
-            title='Course 1'
-        if content is None:
-            content = 'Lorem Not my fucking problem.'
-        course = Course(
-            title=title,
-            overview=content,
-            user = owner,
-            subject=random.choice(Subject.objects.all())
-        )
-        course.save()
-        return course
-
-    def create_module(self,course,title=None,description=None):
-        if title is None:
-            title='Course 1'
-        if description is None:
-            description = 'Lorem Not my fucking problem.'
-        module = Module(
-            title=title,
-            description=description,
-            course = course
-        )
-        module.save()
-        return module
-
-    def create_text_content(self,module,title=None,content=None):
-        content_type='text'
-        if title is None:
-            title = "Greeting"
-        if content is None:
-            content = "hai ther How are you"
-        data = {
-            'title':title,
-            'content':content
-        }
-        serializer = content_serializer[content_type](data=data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save(owner=self.teacher)
-        #print(serializer.data)
-        #print(type(instance))
-        content = Content(module=module,item=instance)
-        content.save()
-        return content
-    
-    def create_image_content(self,module,title=None,file_name=None):
-        #print(self.module.contents.all())
-        content_type='image'
-        if title is None:
-            title = "My Image"
-        if file_name is None:
-            file_name = self.get_default_image()
-        image = SimpleUploadedFile(file_name, b"file_content", content_type="video/mp4")
-        content_type='image'
-        data = {
-            'title':title,
-            'file':image
-        }
-        serializer = content_serializer[content_type](data=data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save(owner=self.teacher)
-        #print(serializer.data)
-        #print(type(instance))  
-        content = Content(module=module,item=instance)
-        content.save()
-        return content
-
-    def create_file_content(self,module,title=None,file_name=None):
-        #print(self.module.contents.all())
-        content_type='file'
-        if title is None:
-            title = "My File"
-        if file_name is None:
-            file_name = self.get_default_file()
-        #print(file_name)
-        file = SimpleUploadedFile(file_name, b"file_content", content_type="video/mp4")
-        data = {
-            'title':title,
-            'file':file
-        }
-        serializer = content_serializer[content_type](data=data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save(owner=self.teacher) 
-        content = Content(module=module,item=instance)
-        content.save()
-        return content
-
-    def create_video_content(self,module,title=None,file_name=None):
-        #print(self.module.contents.all())
-        content_type='video'
-        if title is None:
-            title = "Video 1"
-        if file_name is None:
-            url = self.get_default_url()
-        #print(file_name)
-        data = {
-            'title':title,
-            'url':url
-        }
-        serializer = content_serializer[content_type](data=data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save(owner=self.teacher) 
-        content = Content(module=module,item=instance)
-        content.save()
-        return content
-    
-    
 
 class SerializerInspTestCase(MyTestCase):
     def setUp(self):
-        subjects = ['science','english','math','python',]
-        for sub in subjects:
-            s = Subject(title=sub.capitalize(),slug=sub)
-            s.save()
+        self.subjects = create_some_subjects()
         self.c = APIClient()
-        users = [
-            {   
-                'name':'teacher1',
-                'password':'teacher1234',
-                'is_teacher':True,
-                'is_student':False,
+        admin,teacher1,student1 = create_three_users()
+        self.c.credentials(HTTP_AUTHORIZATION=create_basic_auth_header(teacher1.username,'teacher1234'))
 
-            },
-        ]
-        for user in users:
-            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
-            u.set_password(user['password'])
-            u.save()
-        all_users = User.objects.all()
-        self.teacher = all_users.filter(is_teacher=True).first()
-        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
-        self.all_subects = Subject.objects.all()
-        self.lorem = """
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-        Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, 
-        on faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. 
-        Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor
-         venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim 
-         sit amet leo."""
-        self.course = self.creat_course(self.teacher,'Course 1',self.lorem)
+        self.teacher = teacher1
+        self.course = self.create_course(self.teacher,'Course 1',self.lorem)
         self.module = self.create_module(self.course,'Module 1',self.lorem[:20])
     
     def test_module_ser(self):
         ser = ModuleSerializer()
-        print(repr(ser))
+        #print(repr(ser))
     
     def test_text_serializer(self):
         ser = TextSerializer()
-        print(repr(ser))
+        #print(repr(ser))
     
     def test_image_serializer(self):
         image_content = self.create_image_content(self.module,'test_image')
         ser = ImageSerializer(image_content.item)
-        print(image_content.item.file.url)
+        #print(image_content.item.file.url)
 
     def test_file_serializer(self):
         file_content = self.create_file_content(self.module,'test_file')
         ser = FileSerializer(file_content.item)
-        print(ser.data)
+        #print(ser.data)
     
     def test_video_serializer(self):
         video_content = self.create_video_content(self.module,'test_vid')
         ser = VideoSerializer(video_content.item)
-        print(ser.data)
+        #print(ser.data)
     
     def test_content_serializer(self):
         file_content = self.create_file_content(self.module,'test_file')
         ser = ContentSerializer(file_content)
-        print(ser.data)
+        #print(ser.data)
     
     def test_content_update_text(self):
         item = self.create_text_content(self.module,title='Text1').item
@@ -956,38 +767,13 @@ class ManageContentTestCase(MyTestCase):
     
         
     def setUp(self):
-        subjects = ['science','english','math','python',]
-        for sub in subjects:
-            s = Subject(title=sub.capitalize(),slug=sub)
-            s.save()
+        self.subjects = create_some_subjects()
         self.c = APIClient()
-        users = [
-            {   
-                'name':'teacher1',
-                'password':'teacher1234',
-                'is_teacher':True,
-                'is_student':False,
+        admin,teacher1,student1 = create_three_users()
+        self.c.credentials(HTTP_AUTHORIZATION=create_basic_auth_header(teacher1.username,'teacher1234'))
 
-            },
-        ]
-        for user in users:
-            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
-            u.set_password(user['password'])
-            u.save()
-        all_users = User.objects.all()
-        teacher = all_users.filter(is_teacher=True).first()
-        self.teacher = teacher
-        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
-        all_subects = Subject.objects.all()
-        self.subjects = all_subects
-        content = """
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-        Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, 
-        on faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. 
-        Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor
-         venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim 
-         sit amet leo."""
-        self.course1 = self.creat_course(teacher,title='Course 1',content=content)
+        self.teacher = teacher1
+        self.course1 = self.create_course(teacher1,title='Course 1')
 
     def test_content_list(self):
         module = self.create_module(title='Module 101',course=self.course1)
@@ -998,7 +784,7 @@ class ManageContentTestCase(MyTestCase):
         resp = self.c.get(reverse_lazy('api:manage_content_list',args=[m.id]))
         response = json.loads(resp.content)
         self.assertEqual(resp.status_code,200)
-        print(json.dumps(response,indent=4),resp.status_code)
+        #print(json.dumps(response,indent=4),resp.status_code)
     
     def test_content_text_create(self):
         module = self.create_module(title='Module 101',course=self.course1)
@@ -1045,7 +831,7 @@ class ManageContentTestCase(MyTestCase):
         #create File
         resp = self.c.post(reverse_lazy('api:manage_content_create',args=[module.id,'file']),data=file_data,content_type=MULTIPART_CONTENT)
         response_file = json.loads(resp.content)
-        print(resp.content,resp.status_code)
+        #print(resp.content,resp.status_code)
         #print(json.dumps(response_file,indent=4),resp.status_code)
         my_contents.append(response_file)
 
@@ -1053,14 +839,14 @@ class ManageContentTestCase(MyTestCase):
         #create Image
         resp = self.c.post(reverse_lazy('api:manage_content_create',args=[module.id,'image']),data=image_data,content_type=MULTIPART_CONTENT)
         response_image = json.loads(resp.content)
-        print(resp.content,resp.status_code)
+        #print(resp.content,resp.status_code)
         #print(json.dumps(response_image,indent=4),resp.status_code)
         my_contents.append(response_image)
 
         #create Video
         resp = self.c.post(reverse_lazy('api:manage_content_create',args=[module.id,'video']),data=video_data)
         response_video = json.loads(resp.content)
-        print(resp.content,resp.status_code)
+        #print(resp.content,resp.status_code)
         #print(json.dumps(response_video,indent=4),resp.status_code)
         my_contents.append(response_video)
 
@@ -1086,7 +872,7 @@ class ManageContentTestCase(MyTestCase):
         module = self.create_module(title='Module 101',course=self.course1)
         content1 = self.create_text_content(module,'my fTest')
         content = TextSerializer(content1).data.copy()
-        print(content1)
+        #print(content1)
         data ={
             'content':'New Contest herre'
         }
@@ -1130,53 +916,22 @@ class ManageContentTestCase(MyTestCase):
         last_cl = json.loads(resp.content)['contents']
         self.assertEqual(len(last_cl),module.contents.count())
 
+
 class StudentViewTestCase(MyTestCase):
 
     def setUp(self):
-        subjects = ['science','english','math','python',]
-        for sub in subjects:
-            s = Subject(title=sub.capitalize(),slug=sub)
-            s.save()
+        self.subjects = create_some_subjects()
         self.c = APIClient()
+        admin,teacher1,student1 = create_three_users()
+        self.c.credentials(HTTP_AUTHORIZATION=create_basic_auth_header(student1.username,'student1234'))
 
-        users = [
-            {   
-                'name':'teacher1',
-                'password':'teacher1234',
-                'is_teacher':True,
-                'is_student':False,
-
-            },
-            {   
-                'name':'student1',
-                'password':'student1234',
-                'is_teacher':False,
-                'is_student':True,
-            }
-        ]
-        for user in users:
-            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
-            u.set_password(user['password'])
-            u.save()
-        all_users = User.objects.all()
-        teacher = all_users.filter(is_teacher=True).first()
-        self.teacher = teacher
-        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
-        all_subects = Subject.objects.all()
-        self.subjects = all_subects
-        content = """
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo."""
+        self.teacher = teacher1
         for i in range(1,54):
-            c = Course(
-                title=f'Course {i}',
-                overview=content,
-                user = teacher,
-                subject=random.choice(all_subects)
-            )
-            c.save()
-        self.total_pages = math.ceil(Course.objects.filter(user=teacher).count()/5)
-        print('total_pages',self.total_pages)
-        self.student1 = User.objects.get(username='student1')
+            self.create_course(title=f'Course {i}',owner = teacher1)
+        
+        self.total_pages = math.ceil(Course.objects.filter(user=teacher1).count()/5)
+        #print('total_pages',self.total_pages)
+        self.student1 = student1
 
         
 
@@ -1187,8 +942,6 @@ class StudentViewTestCase(MyTestCase):
             c.students.add(self.student1)
         course_ids = set([int(c.id) for c in self.student1.courses_joined.all()][:5])
         #print(set.difference(c_id,course_ids))
-        basic_auth_token = create_basic_auth_token('student1','student1234')
-        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
 
         resp = self.c.get(reverse_lazy('api:enrolled_course_list'))
         cont = json.loads(resp.content)
@@ -1204,9 +957,6 @@ class StudentViewTestCase(MyTestCase):
         length = self.student1.courses_joined.count()
         total_pages = math.ceil(length/5)
         last_page_count = length%total_pages
-
-        basic_auth_token = create_basic_auth_token('student1','student1234')
-        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
 
         #first page
         resp = self.c.get(reverse_lazy('api:enrolled_course_list_page',args=[1]))
@@ -1228,12 +978,10 @@ class StudentViewTestCase(MyTestCase):
         module = self.create_module(title='My Mod',course=course)
 
         course.students.add(self.student1)
-        basic_auth_token = create_basic_auth_token('student1','student1234')
-        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
 
         resp = self.c.get(reverse_lazy('api:enrolled_course_detail',args=[course.id]))
         response = json.loads(resp.content)
-        print(response,resp.status_code)
+        #print(response,resp.status_code)
         self.assertEqual(resp.status_code,200)
     
     def test_module_content_list(self):
@@ -1243,12 +991,10 @@ class StudentViewTestCase(MyTestCase):
             self.create_text_content(module=module,title =f'Content {i}')
         course.students.add(self.student1)
 
-        basic_auth_token = create_basic_auth_token('student1','student1234')
-        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
 
         resp = self.c.get(reverse_lazy('api:enrolled_module_detail',args=[module.id]))
         response = json.loads(resp.content)
-        print(response,resp.status_code)
+        #print(response,resp.status_code)
         self.assertEqual(resp.status_code,200)
     
     def test_a_query(self):
@@ -1256,50 +1002,22 @@ class StudentViewTestCase(MyTestCase):
         module = self.create_module(title='My Mod',course=course)
         for i in range(5):
             self.create_text_content(module=module,title =f'Content {i}')
-        module = Module.objects.get(id=id,course__students__in=[self.student1])
+        #print(ModuleSerializer(module).data)
+        course.students.add(self.student1)
+        module = Module.objects.get(id=module.id,course__students__in=[self.student1])
 
 class EnrollUnenrollTestCase(MyTestCase):
     def setUp(self):
-        subjects = ['science','english','math','python',]
-        for sub in subjects:
-            s = Subject(title=sub.capitalize(),slug=sub)
-            s.save()
+        self.subjects = create_some_subjects()
         self.c = APIClient()
+        admin,teacher1,student1 = create_three_users()
+        self.c.credentials(HTTP_AUTHORIZATION=create_basic_auth_header(student1.username,'student1234'))
 
-        users = [
-            {   
-                'name':'teacher1',
-                'password':'teacher1234',
-                'is_teacher':True,
-                'is_student':False,
-
-            },
-            {   
-                'name':'student1',
-                'password':'student1234',
-                'is_teacher':False,
-                'is_student':True,
-            }
-        ]
-        for user in users:
-            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
-            u.set_password(user['password'])
-            u.save()
-        all_users = User.objects.all()
-        teacher = all_users.filter(is_teacher=True).first()
-        self.teacher = teacher
-        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
-        all_subects = Subject.objects.all()
-        self.subjects = all_subects
-        content = """
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo."""
-        self.student1 = User.objects.get(username='student1')
+        self.teacher = teacher1
+        self.student1 = student1
     
     def test_enroll(self):
-        course = self.creat_course(self.teacher,title='Course 1')
-        
-        basic_auth_token = create_basic_auth_token('student1','student1234')
-        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+        course = self.create_course(self.teacher,title='Course 1')
         
         self.assertEqual(self.student1 in course.students.all(), False)
         resp = self.c.get(reverse_lazy('api:course_enroll',args=[course.id]))
@@ -1310,10 +1028,8 @@ class EnrollUnenrollTestCase(MyTestCase):
         self.assertEqual(self.student1 in course.students.all(), True)
 
     def test_unenroll(self):
-        course = self.creat_course(self.teacher,title='Course 1')
+        course = self.create_course(self.teacher,title='Course 1')
         course.students.add(self.student1)
-        basic_auth_token = create_basic_auth_token('student1','student1234')
-        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
         
         self.assertEqual(self.student1 in course.students.all(), True)
         resp = self.c.get(reverse_lazy('api:course_unenroll',args=[course.id]))
@@ -1324,9 +1040,7 @@ class EnrollUnenrollTestCase(MyTestCase):
         self.assertEqual(self.student1 in course.students.all(), False)
 
     def test_unenroll_which_not_enrolled(self):
-        course = self.creat_course(self.teacher,title='Course 1')
-        basic_auth_token = create_basic_auth_token('student1','student1234')
-        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+        course = self.create_course(self.teacher,title='Course 1')
         
         self.assertEqual(self.student1 in course.students.all(), False)
         resp = self.c.get(reverse_lazy('api:course_unenroll',args=[course.id]))
@@ -1339,41 +1053,16 @@ class EnrollUnenrollTestCase(MyTestCase):
 
 class ReorderTestCase(MyTestCase):
     def setUp(self):
-        subjects = ['science','english','math','python',]
-        for sub in subjects:
-            s = Subject(title=sub.capitalize(),slug=sub)
-            s.save()
+        self.subjects = create_some_subjects()
         self.c = APIClient()
+        admin,teacher1,student1 = create_three_users()
+        self.c.credentials(HTTP_AUTHORIZATION=create_basic_auth_header(teacher1.username,'teacher1234'))
 
-        users = [
-            {   
-                'name':'teacher1',
-                'password':'teacher1234',
-                'is_teacher':True,
-                'is_student':False,
-
-            },
-            {   
-                'name':'student1',
-                'password':'student1234',
-                'is_teacher':False,
-                'is_student':True,
-            }
-        ]
-        for user in users:
-            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
-            u.set_password(user['password'])
-            u.save()
-        all_users = User.objects.all()
-        teacher = all_users.filter(is_teacher=True).first()
-        self.teacher = teacher
-        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
-        all_subects = Subject.objects.all()
-        self.subjects = all_subects
-        content = """
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo."""
-        self.student1 = User.objects.get(username='student1')
-        self.course = Course.objects.create(title='Course1',user=self.teacher)
+        self.teacher = teacher1
+        self.student1 = student1
+        self.course = self.create_course(title='Course1',owner=self.teacher)
+        for i in range(7):
+            self.create_module(self.course,title=f'moule {i}')
     
     def json_load_dict_str_to_int(self,object):
         a = []
@@ -1408,14 +1097,11 @@ class ReorderTestCase(MyTestCase):
         return new_order
     
     def test_module_reorder(self):
-        for i in range(7):
-            self.create_module(self.course,title=f'moule {i}')
+        
         qs = self.course.modules
         order = self.get_order_from_qs(qs)
         new_order = self.shuffle_order(order)
 
-        basic_auth_token = create_basic_auth_token('teacher1','teacher1234')
-        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
         self.assertNotEqual(order,new_order)
         resp = self.c.post(reverse_lazy('api:module_reorder'),data = new_order)
         response = json.loads(resp.content)
@@ -1428,15 +1114,11 @@ class ReorderTestCase(MyTestCase):
         self.assertEqual(updated,order)
 
     def test_module_reorder_partial(self):
-        for i in range(7):
-            self.create_module(self.course,title=f'moule {i}')
+        
         qs = self.course.modules
         order = self.get_order_from_qs(qs)
-        order[8] = 8
         new_order = self.shuffle_order(order)
-
-        basic_auth_token = create_basic_auth_token('teacher1','teacher1234')
-        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+        new_order[8] = 8
         self.assertNotEqual(order,new_order)
         resp = self.c.post(reverse_lazy('api:module_reorder'),data = new_order)
         response = json.loads(resp.content)
@@ -1448,11 +1130,8 @@ class ReorderTestCase(MyTestCase):
         self.assertEqual(un_updated,{8:8})
 
     def test_module_reorder_nothing(self):
-        for i in range(7):
-            self.create_module(self.course,title=f'moule {i}')
+        
         new_order={8:8}
-        basic_auth_token = create_basic_auth_token('teacher1','teacher1234')
-        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
         resp = self.c.post(reverse_lazy('api:module_reorder'),data = new_order)
         response = json.loads(resp.content)
         #print(response,resp.status_code)
@@ -1470,8 +1149,6 @@ class ReorderTestCase(MyTestCase):
         order = self.get_order_from_qs(qs)
         new_order = self.shuffle_order(order)
         #print(order,new_order)
-        basic_auth_token = create_basic_auth_token('teacher1','teacher1234')
-        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
         self.assertNotEqual(order,new_order)
         resp = self.c.post(reverse_lazy('api:content_reorder'),data = new_order)
         response = json.loads(resp.content)
