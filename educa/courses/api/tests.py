@@ -1257,3 +1257,82 @@ class StudentViewTestCase(MyTestCase):
         for i in range(5):
             self.create_text_content(module=module,title =f'Content {i}')
         module = Module.objects.get(id=id,course__students__in=[self.student1])
+
+class EnrollUnenrollTestCase(MyTestCase):
+    def setUp(self):
+        subjects = ['science','english','math','python',]
+        for sub in subjects:
+            s = Subject(title=sub.capitalize(),slug=sub)
+            s.save()
+        self.c = APIClient()
+
+        users = [
+            {   
+                'name':'teacher1',
+                'password':'teacher1234',
+                'is_teacher':True,
+                'is_student':False,
+
+            },
+            {   
+                'name':'student1',
+                'password':'student1234',
+                'is_teacher':False,
+                'is_student':True,
+            }
+        ]
+        for user in users:
+            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
+            u.set_password(user['password'])
+            u.save()
+        all_users = User.objects.all()
+        teacher = all_users.filter(is_teacher=True).first()
+        self.teacher = teacher
+        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
+        all_subects = Subject.objects.all()
+        self.subjects = all_subects
+        content = """
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo."""
+        self.student1 = User.objects.get(username='student1')
+    
+    def test_enroll(self):
+        course = self.creat_course(self.teacher,title='Course 1')
+        
+        basic_auth_token = create_basic_auth_token('student1','student1234')
+        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+        
+        self.assertEqual(self.student1 in course.students.all(), False)
+        resp = self.c.get(reverse_lazy('api:course_enroll',args=[course.id]))
+        response = json.loads(resp.content)
+        #print(response,resp.status_code)
+        self.assertEqual(resp.status_code,200)
+
+        self.assertEqual(self.student1 in course.students.all(), True)
+
+    def test_unenroll(self):
+        course = self.creat_course(self.teacher,title='Course 1')
+        course.students.add(self.student1)
+        basic_auth_token = create_basic_auth_token('student1','student1234')
+        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+        
+        self.assertEqual(self.student1 in course.students.all(), True)
+        resp = self.c.get(reverse_lazy('api:course_unenroll',args=[course.id]))
+        response = json.loads(resp.content)
+        #print(response,resp.status_code)
+        self.assertEqual(resp.status_code,200)
+
+        self.assertEqual(self.student1 in course.students.all(), False)
+
+    def test_unenroll_which_not_enrolled(self):
+        course = self.creat_course(self.teacher,title='Course 1')
+        basic_auth_token = create_basic_auth_token('student1','student1234')
+        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+        
+        self.assertEqual(self.student1 in course.students.all(), False)
+        resp = self.c.get(reverse_lazy('api:course_unenroll',args=[course.id]))
+        response = json.loads(resp.content)
+        #print(response,resp.status_code)
+        self.assertEqual(resp.status_code,406)
+
+        self.assertEqual(self.student1 in course.students.all(), False)  
+    
