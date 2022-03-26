@@ -1,4 +1,5 @@
 import math
+from urllib import response
 from rest_framework import viewsets,status
 from rest_framework.decorators import action
 from rest_framework.views import APIView
@@ -436,7 +437,53 @@ class EnrollmentViewset(viewsets.ViewSet):
             return_status = status.HTTP_406_NOT_ACCEPTABLE
         return Response(message,status=return_status)
 
-
+class OrderingViewSet(viewsets.ViewSet):
+    permission_classes = [IsTeacher]
     
+    def reorder(self,data,queryset):
+        updated = dict()
+        un_updated = dict()
+        for id,order in data.items():
+            #print(id,order)
+            try:
+                queryset.update(order=order)
+            except Exception as e:
+                un_updated[id]=order
+                print(f'While Updatng order of {queryset.model._meta.model_name} of id={id} to order {order},raised:',e)
+                continue
+            updated[id]=order
+        output = {}
+        if updated == dict():
+            output['detail']='Unsuccessful'
+            return_status=status.HTTP_400_BAD_REQUEST
+        elif un_updated != dict():
+            output['detail']='Parital success'
+            return_status=status.HTTP_206_PARTIAL_CONTENT
+        else:
+            output['detail']='Success'
+            return_status=status.HTTP_200_OK
+        output['updated'] = updated    
+        output['un_updated'] = un_updated
+        return output,return_status
+    
+    def module(self,request,*args, **kwargs):
+        """ recieves a dictionary of items (id : order )
+            where id --> id of the module
+            order --> order of the module instance in the course
+        """
+        data = request.data
+        qs = Module.objects.filter(id=id,course__user = request.user)
+        output,return_status = self.reorder(data,qs)   
+        return Response(output,status=return_status)
+        
+    def content(self,request,*args, **kwargs):
+        """ recieves a dictionary of items (id : order )
+            where id --> id of the Content
+            order --> order of the content instance in the module
+        """
+        data = request.data
+        qs = Content.objects.filter(id=id,module__course__user = request.user)
+        output,return_status = self.reorder(data,qs)   
+        return Response(output,status=return_status)
 
         

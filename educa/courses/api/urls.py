@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import StudentViewSet, SubjectViewSet,CoursePublicViewSet,ManageCourseViewSet,ManageModuleCreate,ManageModuleDetail,ManageContentList,ManageContentDetail,EnrollmentViewset
+from .views import OrderingViewSet, StudentViewSet, SubjectViewSet,CoursePublicViewSet,ManageCourseViewSet,ManageModuleCreate,ManageModuleDetail,ManageContentList,ManageContentDetail,EnrollmentViewset,OrderingViewSet
 
 app_name = 'courses'
 
@@ -33,5 +33,6 @@ urlpatterns = [
     path('enrolled/course/module/<int:id>/',StudentViewSet.as_view({'get':'module_content_list'}),name='enrolled_module_detail'),
     path('course/enroll/<int:id>',EnrollmentViewset.as_view({'get':'enroll'}),name='course_enroll'),
     path('course/unenroll/<int:id>',EnrollmentViewset.as_view({'get':'unenroll'}),name='course_unenroll'),
-
+    path('manage/module/reorder/',OrderingViewSet.as_view({'post':'model'}),name='module_reorder'),
+    path('manage/content/reorder/',OrderingViewSet.as_view({'post':'content'}),name='content_reorder'),
 ]
