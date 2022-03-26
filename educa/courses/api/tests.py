@@ -1335,4 +1335,149 @@ class EnrollUnenrollTestCase(MyTestCase):
         self.assertEqual(resp.status_code,406)
 
         self.assertEqual(self.student1 in course.students.all(), False)  
+
+
+class ReorderTestCase(MyTestCase):
+    def setUp(self):
+        subjects = ['science','english','math','python',]
+        for sub in subjects:
+            s = Subject(title=sub.capitalize(),slug=sub)
+            s.save()
+        self.c = APIClient()
+
+        users = [
+            {   
+                'name':'teacher1',
+                'password':'teacher1234',
+                'is_teacher':True,
+                'is_student':False,
+
+            },
+            {   
+                'name':'student1',
+                'password':'student1234',
+                'is_teacher':False,
+                'is_student':True,
+            }
+        ]
+        for user in users:
+            u = User(username=user['name'],is_teacher=user['is_teacher'],is_student=user['is_student'])
+            u.set_password(user['password'])
+            u.save()
+        all_users = User.objects.all()
+        teacher = all_users.filter(is_teacher=True).first()
+        self.teacher = teacher
+        self.c.credentials(HTTP_AUTHORIZATION='Basic dGVhY2hlcjE6dGVhY2hlcjEyMzQ=')
+        all_subects = Subject.objects.all()
+        self.subjects = all_subects
+        content = """
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rhoncus, leo at dictum sollicitudin, sapien dolor vestibulum velit, non faucibus ipsum est at tellus. Maecenas sed pharetra mi. Mauris eget turpis ante. Cras et dignissim nisi. Phasellus commodo id mauris et suscipit. Ut in tellus a dolor venenatis mollis nec eu urna. Aenean massa nisl, accumsan ut vehicula ac, dignissim sit amet leo."""
+        self.student1 = User.objects.get(username='student1')
+        self.course = Course.objects.create(title='Course1',user=self.teacher)
     
+    def json_load_dict_str_to_int(self,object):
+        a = []
+        if type(object) != dict:
+            return {}
+        for key,val in object.items():
+            try:
+                key=int(key)
+            except:
+                pass
+            try:
+                val=int(val)
+            except:
+                pass
+            a.append((key,val))
+        return dict(a)
+
+    def get_order_from_qs(self,queryset):
+        return { m.id:m.order for m in queryset.all() }
+
+    def shuffle_order(self,order):
+        #print(order)
+        key_list = [key for key in order.keys()]
+        #print(key_list)
+        val_list = [val for val in order.values()]  
+        #print(val_list)
+        shuffled_list = val_list.copy()
+        random.shuffle(shuffled_list)
+        #print(shuffled_list)
+        new_order = dict(zip(key_list,shuffled_list))
+        #print(new_order)
+        return new_order
+    
+    def test_module_reorder(self):
+        for i in range(7):
+            self.create_module(self.course,title=f'moule {i}')
+        qs = self.course.modules
+        order = self.get_order_from_qs(qs)
+        new_order = self.shuffle_order(order)
+
+        basic_auth_token = create_basic_auth_token('teacher1','teacher1234')
+        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+        self.assertNotEqual(order,new_order)
+        resp = self.c.post(reverse_lazy('api:module_reorder'),data = new_order)
+        response = json.loads(resp.content)
+        #print(response,resp.status_code)
+        self.assertEqual(resp.status_code,200)
+        updated = self.json_load_dict_str_to_int(response['updated'])
+        self.assertEqual(updated,new_order)
+        qs = self.course.modules
+        order = self.get_order_from_qs(qs)
+        self.assertEqual(updated,order)
+
+    def test_module_reorder_partial(self):
+        for i in range(7):
+            self.create_module(self.course,title=f'moule {i}')
+        qs = self.course.modules
+        order = self.get_order_from_qs(qs)
+        order[8] = 8
+        new_order = self.shuffle_order(order)
+
+        basic_auth_token = create_basic_auth_token('teacher1','teacher1234')
+        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+        self.assertNotEqual(order,new_order)
+        resp = self.c.post(reverse_lazy('api:module_reorder'),data = new_order)
+        response = json.loads(resp.content)
+        #print(response,resp.status_code)
+        self.assertEqual(resp.status_code,206)
+        updated = self.json_load_dict_str_to_int(response['updated'])
+        self.assertNotEqual(updated,new_order)
+        un_updated= self.json_load_dict_str_to_int(response['un_updated'])
+        self.assertEqual(un_updated,{8:8})
+
+    def test_module_reorder_nothing(self):
+        for i in range(7):
+            self.create_module(self.course,title=f'moule {i}')
+        new_order={8:8}
+        basic_auth_token = create_basic_auth_token('teacher1','teacher1234')
+        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+        resp = self.c.post(reverse_lazy('api:module_reorder'),data = new_order)
+        response = json.loads(resp.content)
+        #print(response,resp.status_code)
+        self.assertEqual(resp.status_code,400)
+        updated = self.json_load_dict_str_to_int(response['updated'])
+        self.assertEqual(updated,{})
+        un_updated= self.json_load_dict_str_to_int(response['un_updated'])
+        self.assertEqual(un_updated,new_order)
+
+    def test_content_reorder(self):
+        module = self.create_module(self.course)
+        for i in range(7):
+            self.create_text_content(module,title=f'content {i}')
+        qs = module.contents    
+        order = self.get_order_from_qs(qs)
+        new_order = self.shuffle_order(order)
+        #print(order,new_order)
+        basic_auth_token = create_basic_auth_token('teacher1','teacher1234')
+        self.c.credentials(HTTP_AUTHORIZATION=f'Basic {basic_auth_token}')
+        self.assertNotEqual(order,new_order)
+        resp = self.c.post(reverse_lazy('api:content_reorder'),data = new_order)
+        response = json.loads(resp.content)
+        #print(response,resp.status_code)
+        self.assertEqual(resp.status_code,200)
+        updated = self.json_load_dict_str_to_int(response['updated'])
+        qs = module.contents
+        order = self.get_order_from_qs(qs)
+        self.assertEqual(order,updated)

@@ -439,17 +439,27 @@ class EnrollmentViewset(viewsets.ViewSet):
 
 class OrderingViewSet(viewsets.ViewSet):
     permission_classes = [IsTeacher]
+
+    def get_module_queryset(self,id,user):
+        return Module.objects.filter(id=id,course__user = user)
     
-    def reorder(self,data,queryset):
+    def get_content_queryset(self,id,user):
+        return Content.objects.filter(id=id,module__course__user = user)
+    
+    def reorder(self,data,get_queryset_func,user):
         updated = dict()
         un_updated = dict()
         for id,order in data.items():
             #print(id,order)
             try:
-                queryset.update(order=order)
+                qs = get_queryset_func(id,user)
+                if qs.exists():
+                    qs.update(order=order)
+                else:
+                    raise Exception('Not Found')
             except Exception as e:
                 un_updated[id]=order
-                print(f'While Updatng order of {queryset.model._meta.model_name} of id={id} to order {order},raised:',e)
+                print(f'While Updatng order of {qs.model._meta.model_name} of id={id} to order {order},raised:',e)
                 continue
             updated[id]=order
         output = {}
@@ -472,8 +482,8 @@ class OrderingViewSet(viewsets.ViewSet):
             order --> order of the module instance in the course
         """
         data = request.data
-        qs = Module.objects.filter(id=id,course__user = request.user)
-        output,return_status = self.reorder(data,qs)   
+        get_qs_func = self.get_module_queryset
+        output,return_status = self.reorder(data,get_qs_func,request.user)   
         return Response(output,status=return_status)
         
     def content(self,request,*args, **kwargs):
@@ -482,8 +492,8 @@ class OrderingViewSet(viewsets.ViewSet):
             order --> order of the content instance in the module
         """
         data = request.data
-        qs = Content.objects.filter(id=id,module__course__user = request.user)
-        output,return_status = self.reorder(data,qs)   
+        get_qs_func = self.get_content_queryset
+        output,return_status = self.reorder(data,get_qs_func,request.user)   
         return Response(output,status=return_status)
 
         
