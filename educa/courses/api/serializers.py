@@ -19,6 +19,12 @@ class SubjectSerializer(serializers.ModelSerializer):
             'slug'
         ]
 
+    def create(self,validated_data):
+        #validated_data is a dictionary
+        if 'slug' not in validated_data:
+            validated_data['slug'] = validated_data['title'].lower()
+        return Subject.objects.create(**validated_data)
+
 class SubjectReadSerializer(SubjectSerializer):
     class Meta(SubjectSerializer.Meta):
         read_only_fields = [
