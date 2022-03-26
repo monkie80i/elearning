@@ -27,6 +27,7 @@ SECRET_KEY = os.environ['PORT_EGYAN_SECRET']
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Application definition
@@ -44,11 +45,13 @@ INSTALLED_APPS = [
     'courses',
     #third party
     #'embed_video',
+    'corsheaders',
     'rest_framework',
     'drf_yasg',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
