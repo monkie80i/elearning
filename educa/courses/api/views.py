@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 from utils.helpers import get_object_or_404_json
 from django.shortcuts import get_object_or_404
-from .permissions import IsStudent, IsTeacher
+from .permissions import IsAdmin, IsStudent, IsTeacher
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import APIException,NotFound,PermissionDenied
 from django.apps import apps
@@ -105,7 +105,7 @@ class SubjectViewSet(viewsets.ViewSet):
 
     @swagger_auto_schema(request_body=SubjectSerializer)
     def create(self,request):
-        if request.user.is_authenticated:
+        if request.user.is_authenticated and request.user.is_superuser:
             serializer = SubjectSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
