@@ -22,8 +22,8 @@ urlpatterns = [
         'patch':'partial_update',
         'delete':'destroy'
     }),name='manage_course_detail_update_delete'),
-    path('manage/module/<int:course_id>/',ManageModuleCreate.as_view(),name='manage_module_create'),
-    path('manage/module/detail/<int:id>/',ManageModuleDetail.as_view(),name='manage_module_detail'),
+    path('manage/course/<int:course_id>/module/',ManageModuleCreate.as_view(),name='manage_module_create'),
+    path('manage/module/<int:id>/',ManageModuleDetail.as_view(),name='manage_module_detail'),
     path('manage/module/<int:module_id>/content/',ManageContentList.as_view(),name='manage_content_list'),
     path('manage/module/<int:module_id>/content/<str:content_type>/',ManageContentList.as_view(),name='manage_content_create'),
     path('manage/content/<str:content_type>/<int:id>/',ManageContentDetail.as_view(),name='manage_content_detail'),
