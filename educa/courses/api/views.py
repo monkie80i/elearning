@@ -416,3 +416,27 @@ class StudentViewSet(PaginateNewMIxin,viewsets.ViewSet):
         output['content_count'] = content_count
         return Response(output,status=status.HTTP_200_OK)
         
+class EnrollmentViewset(viewsets.ViewSet):
+    permission_classes = [IsStudent]
+
+    def enroll(self,request,id=None,*args, **kwargs):
+        course = get_object_or_404(Course,id=id)
+        course.students.add(request.user)
+        return Response({'detail':'Successfuly enrolled.'},status=status.HTTP_200_OK)
+        
+
+    def unenroll(self,request,id=None,*args, **kwargs):
+        course = get_object_or_404(Course,id=id)
+        if request.user in course.students.all():
+            course.students.remove(request.user)
+            message = {'detail':'Succesfully unenrolled.'}
+            return_status = status.HTTP_200_OK
+        else:
+            message = {'detail':'User not enrolled tot this course.'}
+            return_status = status.HTTP_406_NOT_ACCEPTABLE
+        return Response(message,status=return_status)
+
+
+    
+
+        
