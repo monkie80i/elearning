@@ -43,11 +43,13 @@ INSTALLED_APPS = [
     'utils',
     'adminManager',
     'courses',
+    'chat',
     #third party
     #'embed_video',
     'corsheaders',
     'rest_framework',
     'drf_yasg',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -150,7 +152,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
     }
 }"""
 
-
+LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'course_list'
 
 
@@ -161,3 +163,5 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
     ],
 }
+
+ASGI_APPLICATION = 'config.routing.application'
