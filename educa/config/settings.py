@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     #'embed_video',
     'corsheaders',
     'rest_framework',
+    'rest_framework.authtoken',
+    'dj_rest_auth',
     'drf_yasg',
 ]
 
@@ -158,6 +160,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         #'rest_framework.authentication.SessionAuthentication',
         #'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+        'utils.authentication.CustomTokenAuthentication',
+        #'rest_framework.authentication.BasicAuthentication',
     ],
 }
