@@ -291,10 +291,10 @@ content_serializer = {
     'video':VideoSerializer
 }
 
-class ManageContentList(APIView):
+class ManageContentList(viewsets.ViewSet):
     permission_classes = [IsTeacher]
 
-    def get(self, request,module_id=None, *args, **kwargs):
+    def list(self, request,module_id=None, *args, **kwargs):
         try:
             module = Module.objects.get(id=module_id,course__user = request.user)
         except ObjectDoesNotExist:
@@ -312,7 +312,7 @@ class ManageContentList(APIView):
         output['content_count'] = content_count
         return Response(output,status=status.HTTP_200_OK)
     
-    def post(self, request,module_id=None,content_type=None, *args, **kwargs):
+    def create(self, request,module_id=None,content_type=None, *args, **kwargs):
         try:
             module = Module.objects.get(id=module_id,course__user = request.user)
         except ObjectDoesNotExist:
