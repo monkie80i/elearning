@@ -145,9 +145,9 @@ class CoursePublicViewSet(PaginateViewSetMixin,viewsets.ViewSet):
         output['total_pages'] = total_pages
         return Response(output,status=status.HTTP_200_OK)
 
-    def retrieve(self,request,id=None):
+    def retrieve(self,request,course_id=None):
         try:
-            course = Course.objects.get(id=id)
+            course = Course.objects.get(id=course_id)
         except:
             return Response({"mesage":"Course Does not exists."},status = status.HTTP_404_NOT_FOUND)
         serializer = PublicCourseSerializer(course)
@@ -185,8 +185,8 @@ class ManageCourseViewSet(PaginateNewMIxin,viewsets.ViewSet):
         self.output['courses'] = serializer.data
         return Response(self.output,status=status.HTTP_200_OK)
 
-    def retrieve(self,request,id=None):
-        course = get_object_or_404(Course,id=id,user=request.user)
+    def retrieve(self,request,course_id=None):
+        course = get_object_or_404(Course,id=course_id,user=request.user)
         serializer = CourseSerializer(course)
         return Response(serializer.data,status=status.HTTP_200_OK)
 
@@ -199,23 +199,23 @@ class ManageCourseViewSet(PaginateNewMIxin,viewsets.ViewSet):
         return Response(serializer.data,status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(request_body=CourseSerializer)
-    def update(self,request,id=None):
-        course = get_object_or_404(Course,id=id,user=request.user)
+    def update(self,request,course_id=None):
+        course = get_object_or_404(Course,id=course_id,user=request.user)
         serializer = CourseSerializer(instance=course,data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data,status=status.HTTP_205_RESET_CONTENT)
     
     @swagger_auto_schema(request_body=CourseSerializer)
-    def partial_update(self,request,id=None):
-        course = get_object_or_404(Course,id=id,user=request.user)
+    def partial_update(self,request,course_id=None):
+        course = get_object_or_404(Course,id=course_id,user=request.user)
         serializer = CourseSerializer(instance=course,data=request.data,partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data,status=status.HTTP_206_PARTIAL_CONTENT)
 
-    def destroy(self,request,id=None):
-        course = get_object_or_404_json(Course,id=id,user=request.user)
+    def destroy(self,request,course_id=None):
+        course = get_object_or_404_json(Course,id=course_id,user=request.user)
         try:
             course.delete()
         except Exception as e:
@@ -420,14 +420,14 @@ class StudentViewSet(PaginateNewMIxin,viewsets.ViewSet):
 class EnrollmentViewset(viewsets.ViewSet):
     permission_classes = [IsStudent]
 
-    def enroll(self,request,id=None,*args, **kwargs):
-        course = get_object_or_404(Course,id=id)
+    def enroll(self,request,course_id=None,*args, **kwargs):
+        course = get_object_or_404(Course,id=course_id)
         course.students.add(request.user)
         return Response({'detail':'Successfuly enrolled.'},status=status.HTTP_200_OK)
         
 
-    def unenroll(self,request,id=None,*args, **kwargs):
-        course = get_object_or_404(Course,id=id)
+    def unenroll(self,request,course_id=None,*args, **kwargs):
+        course = get_object_or_404(Course,id=course_id)
         if request.user in course.students.all():
             course.students.remove(request.user)
             message = {'detail':'Succesfully unenrolled.'}

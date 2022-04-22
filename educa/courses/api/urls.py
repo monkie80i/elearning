@@ -10,13 +10,13 @@ urlpatterns = [
     path('courses/<int:page_number>/',CoursePublicViewSet.as_view({'get':'list'}),name='public_course_list_all_page'),
     path('courses/subject/<str:subject_slug>/',CoursePublicViewSet.as_view({'get':'list'}),name='public_course_list_subject'),
     path('courses/subject/<str:subject_slug>/<int:page_number>',CoursePublicViewSet.as_view({'get':'list'}),name='public_course_list_subject_page'),
-    path('course/<int:id>/',CoursePublicViewSet.as_view({'get':'retrieve'}),name='public_course_detail'),
+    path('course/<int:course_id>/',CoursePublicViewSet.as_view({'get':'retrieve'}),name='public_course_detail'),
     path('manage/courses/',ManageCourseViewSet.as_view({'get':'list'}),name='manage_course_list'),
     path('manage/courses/<int:page_number>/',ManageCourseViewSet.as_view({'get':'list'}),name='manage_course_list_page'),
     path('manage/courses/subject/<str:subject_slug>/',ManageCourseViewSet.as_view({'get':'list'}),name='manage_course_list_subject'),
     path('manage/courses/subject/<str:subject_slug>/<int:page_number>',ManageCourseViewSet.as_view({'get':'list'}),name='manage_course_list_subject_page'),
     path('manage/course/',ManageCourseViewSet.as_view({'post':'create'}),name='manage_course_create'),
-    path('manage/course/<int:id>/',ManageCourseViewSet.as_view({
+    path('manage/course/<int:course_id>/',ManageCourseViewSet.as_view({
         'get':'retrieve',
         'put':'update',
         'patch':'partial_update',
@@ -31,8 +31,8 @@ urlpatterns = [
     path('enrolled/courses/<int:page_number>/',StudentViewSet.as_view({'get':'list_enrolled'}),name='enrolled_course_list_page'),
     path('enrolled/course/<int:id>/',StudentViewSet.as_view({'get':'course_detail'}),name='enrolled_course_detail'),
     path('enrolled/course/module/<int:id>/',StudentViewSet.as_view({'get':'module_content_list'}),name='enrolled_module_detail'),
-    path('course/enroll/<int:id>',EnrollmentViewset.as_view({'get':'enroll'}),name='course_enroll'),
-    path('course/unenroll/<int:id>',EnrollmentViewset.as_view({'get':'unenroll'}),name='course_unenroll'),
+    path('course/enroll/<int:course_id>',EnrollmentViewset.as_view({'get':'enroll'}),name='course_enroll'),
+    path('course/unenroll/<int:course_id>',EnrollmentViewset.as_view({'get':'unenroll'}),name='course_unenroll'),
     path('manage/module/reorder/',OrderingViewSet.as_view({'post':'module'}),name='module_reorder'),
     path('manage/content/reorder/',OrderingViewSet.as_view({'post':'content'}),name='content_reorder'),
 ]
