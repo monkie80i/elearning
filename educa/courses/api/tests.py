@@ -231,7 +231,7 @@ class SubjectTestCase(TestCase):
         self.admin = create_admin_user()
     
     def test_subject_list(self):
-        response = self.c.get(reverse_lazy('api:subject_list'))
+        response = self.c.get(reverse_lazy('api:subjects'))
         self.assertEqual(response.status_code,200)
         resp = json.loads(response.content)
         res_subs = [s['slug'] for s in resp]
@@ -248,7 +248,7 @@ class SubjectTestCase(TestCase):
     def test_subject_create(self):
         data = {'title':'Django'}
         self.c.credentials(HTTP_AUTHORIZATION=create_basic_auth_header('admin','admin'))
-        response = self.c.post(reverse_lazy('api:subject_create'),data=data)
+        response = self.c.post(reverse_lazy('api:subjects'),data=data)
         self.assertEqual(response.status_code,201)
         #print(response.content)
         #print(Subject.objects.get(title='Django'))

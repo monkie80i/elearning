@@ -96,15 +96,16 @@ class PaginateNewMIxin(object):
             return self.paginated_qs
         
 
-class SubjectViewSet(viewsets.ViewSet):
-    queryset = Subject.objects.all()
+class SubjectViewSet(APIView):
+    def get_queryset(self):
+        return Subject.objects.all()
     
-    def list(self,request):
-        serializer = SubjectSerializer(self.queryset,many=True)
+    def get(self,request):
+        serializer = SubjectSerializer(self.get_queryset() ,many=True)
         return Response(serializer.data)
 
     @swagger_auto_schema(request_body=SubjectSerializer)
-    def create(self,request):
+    def post(self,request):
         if request.user.is_authenticated and request.user.is_superuser:
             serializer = SubjectSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
