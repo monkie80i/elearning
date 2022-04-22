@@ -240,20 +240,20 @@ class ManageModuleCreate(APIView):
 class ManageModuleDetail(APIView):
     permission_classes = [IsTeacher]
 
-    def get(self, request,id=None, *args, **kwargs):
+    def get(self, request,module_id=None, *args, **kwargs):
         # detail View
         try:
-            module = Module.objects.get(id=id,course__user=request.user)
+            module = Module.objects.get(id=module_id,course__user=request.user)
         except ObjectDoesNotExist:
             return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
         serializer = ModuleSerializer(module)
         return Response(serializer.data,status=status.HTTP_200_OK)
     
     
-    def put(self, request,id=None,*args, **kwargs):
+    def put(self, request,module_id=None,*args, **kwargs):
         # update
         try:
-            module = Module.objects.get(id=id,course__user=request.user)
+            module = Module.objects.get(id=module_id,course__user=request.user)
         except ObjectDoesNotExist:
             return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
         serializer = ModuleSerializer(instance=module,data=request.data)
@@ -261,10 +261,10 @@ class ManageModuleDetail(APIView):
         serializer.save()
         return Response(serializer.data,status=status.HTTP_205_RESET_CONTENT)
     
-    def patch(self, request,id=None, *args, **kwargs):
+    def patch(self, request,module_id=None, *args, **kwargs):
         #partial update
         try:
-            module = Module.objects.get(id=id,course__user=request.user)
+            module = Module.objects.get(id=module_id,course__user=request.user)
         except ObjectDoesNotExist:
             return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
         serializer = ModuleSerializer(instance=module,data=request.data,partial=True)
@@ -272,10 +272,10 @@ class ManageModuleDetail(APIView):
         serializer.save()
         return Response(serializer.data,status=status.HTTP_206_PARTIAL_CONTENT)
     
-    def delete(self, request,id=None, *args, **kwargs):
+    def delete(self, request,module_id=None, *args, **kwargs):
         #delete
         try:
-            module = Module.objects.get(id=id,course__user=request.user)
+            module = Module.objects.get(id=module_id,course__user=request.user)
         except ObjectDoesNotExist:
             return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
         try:
@@ -338,12 +338,12 @@ class ManageContentDetail(APIView):
             return apps.get_model(app_label='courses',model_name=model_name)
         return None
 
-    def put(self, request,content_type=None,id=None, *args, **kwargs):
+    def put(self, request,content_type=None,content_id=None, *args, **kwargs):
         if content_type not in ('text','image','file','video'):
             return Response({'detail':"Need Content type in parameter.Options:('text','image','file','video')."},status=status.HTTP_400_BAD_REQUEST)
         try:
             content_type_object = ContentType.objects.get(app_label='courses',model=content_type)
-            content = Content.objects.get(id=id,module__course__user=request.user,content_type=content_type_object)
+            content = Content.objects.get(id=content_id,module__course__user=request.user,content_type=content_type_object)
         except ObjectDoesNotExist:
             return Response({'detail':'Content does not exist.'},status=status.HTTP_404_NOT_FOUND)
         data = request.data
@@ -356,12 +356,12 @@ class ManageContentDetail(APIView):
         return Response(content_szr,status=status.HTTP_205_RESET_CONTENT)
 
 
-    def delete(self, request,content_type=None,id=None, *args, **kwargs):
+    def delete(self, request,content_type=None,content_id=None, *args, **kwargs):
         if content_type not in ('text','image','file','video'):
             return Response({'detail':"Need Content type in parameter.Options:('text','image','file','video')."},status=status.HTTP_400_BAD_REQUEST)
         try:
             content_type_object = ContentType.objects.get(app_label='courses',model=content_type)
-            content = Content.objects.get(id=id,module__course__user=request.user,content_type=content_type_object)
+            content = Content.objects.get(id=content_id,module__course__user=request.user,content_type=content_type_object)
         except ObjectDoesNotExist:
             return Response({'detail':'Content does not exist.'},status=status.HTTP_404_NOT_FOUND)
         try:
@@ -391,17 +391,17 @@ class StudentViewSet(PaginateNewMIxin,viewsets.ViewSet):
         self.output['courses'] = serializer.data.copy()
         return Response(self.output,status=status.HTTP_200_OK)
     
-    def course_detail(self,request,id=None,*args, **kwargs):
+    def course_detail(self,request,course_id=None,*args, **kwargs):
         try:
-            course = self.get_queryset(request).get(id=id)
+            course = self.get_queryset(request).get(id=course_id)
         except ObjectDoesNotExist:
             return Response({'detail':'Course does not exist.'},status=status.HTTP_404_NOT_FOUND)
         serializer = CourseSerializer(course)
         return Response(serializer.data,status=status.HTTP_200_OK)
 
-    def module_content_list(self,request,id=None,*args, **kwargs):
+    def module_content_list(self,request,module_id=None,*args, **kwargs):
         try:
-            module = Module.objects.get(id=id,course__students__in=[request.user])
+            module = Module.objects.get(id=module_id,course__students__in=[request.user])
         except ObjectDoesNotExist:
             return Response({'detail':'Module does not exist.'},status=status.HTTP_404_NOT_FOUND)
         module_szr = ModuleSerializer(module).data.copy()
