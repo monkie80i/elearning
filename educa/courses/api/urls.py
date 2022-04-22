@@ -5,8 +5,6 @@ app_name = 'courses'
 
 urlpatterns = [
     path('subjects/',SubjectViewSet.as_view(),name="subjects"),
-    #path('subjects/',SubjectViewSet.as_view({'get':'list'}),name="subject_list"),
-    #path('subject/create/',SubjectViewSet.as_view({'post':'create'}),name="subject_create"),
     path('courses/',CoursePublicViewSet.as_view({'get':'list'}),name='public_course_list_all'),
     path('courses/<int:page_number>/',CoursePublicViewSet.as_view({'get':'list'}),name='public_course_list_all_page'),
     path('courses/subject/<str:subject_slug>/',CoursePublicViewSet.as_view({'get':'list'}),name='public_course_list_subject'),
