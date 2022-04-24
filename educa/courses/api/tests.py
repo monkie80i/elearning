@@ -676,8 +676,7 @@ class ManageModuleTestCase(MyTestCase):
 
     def test_module_delete(self):
         resp = self.c.delete(reverse_lazy('api:manage_module_detail',args=[self.module.id]))
-        response = json.loads(resp.content)
-        #print(response,resp.status_code)
+        self.assertEqual(204,resp.status_code)
 
     def test_module_with_content_delete(self):
         self.create_text_content(self.module,title='Hello 1',content="Do well")
@@ -686,9 +685,9 @@ class ManageModuleTestCase(MyTestCase):
         ser = ModuleSerializer(self.module)
         #print(ser.data)
         resp = self.c.delete(reverse_lazy('api:manage_module_detail',args=[self.module.id]))
-        response = json.loads(resp.content)
+        #response = json.loads(resp.content)
         #print(response,resp.status_code)
-        self.assertEqual(resp.status_code,200)
+        self.assertEqual(resp.status_code,204)
 
 
 
