@@ -308,10 +308,9 @@ content_serializer = {
     'file': FileSerializer,
     'video':VideoSerializer
 }
-from rest_framework import parsers
+
 class ManageContentList(viewsets.ViewSet):
-    permission_classes = [IsTeacher]
-    #parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.FileUploadParser)    
+    permission_classes = [IsTeacher]   
 
     
 
@@ -371,7 +370,7 @@ class ManageContentList(viewsets.ViewSet):
     
     
 
-class ManageContentDetail(APIView):
+class ManageContentDetail(viewsets.ViewSet):
     permission_classes = [IsTeacher]
 
     def get_model(self,model_name):
@@ -379,7 +378,7 @@ class ManageContentDetail(APIView):
             return apps.get_model(app_label='courses',model_name=model_name)
         return None
 
-    def put(self, request,content_type=None,content_id=None, *args, **kwargs):
+    def update(self, request,content_type,content_id, *args, **kwargs):
         if content_type not in ('text','image','file','video'):
             return Response({'detail':"Need Content type in parameter.Options:('text','image','file','video')."},status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -396,8 +395,24 @@ class ManageContentDetail(APIView):
         content_szr = serializer_content(content)
         return Response(content_szr,status=status.HTTP_205_RESET_CONTENT)
 
+    @swagger_auto_schema(request_body=text_req_body_schema,responses={status.HTTP_205_RESET_CONTENT:text_content_resp})
+    def text_update(self, request,content_id):
+        return self.update(request,'text',content_id)
 
-    def delete(self, request,content_type=None,content_id=None, *args, **kwargs):
+    @swagger_auto_schema(request_body=image_req_body_schema,responses={status.HTTP_205_RESET_CONTENT:image_content_resp})
+    def image_update(self, request,content_id):
+        return self.update(request,'image',content_id)
+        
+    @swagger_auto_schema(request_body=file_req_body_schema,responses={status.HTTP_205_RESET_CONTENT:file_content_resp})
+    def file_update(self, request,content_id):
+        return self.update(request,'file',content_id)
+        
+    @swagger_auto_schema(request_body=video_req_body_schema,responses={status.HTTP_205_RESET_CONTENT:video_content_resp})
+    def video_update(self, request,content_id):
+        return self.update(request,'video',content_id)
+
+
+    def destroy(self, request,content_type=None,content_id=None, *args, **kwargs):
         if content_type not in ('text','image','file','video'):
             return Response({'detail':"Need Content type in parameter.Options:('text','image','file','video')."},status=status.HTTP_400_BAD_REQUEST)
         try:

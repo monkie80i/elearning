@@ -31,7 +31,20 @@ urlpatterns = [
     path('manage/module/<int:module_id>/content/file/',ManageContentList.as_view({'post':'file_create'}),name='manage_content_create_file'),
     path('manage/module/<int:module_id>/content/video/',ManageContentList.as_view({'post':'video_create'}),name='manage_content_create_video'),
     #Content update and delete
-    path('manage/content/<str:content_type>/<int:content_id>/',ManageContentDetail.as_view(),name='manage_content_detail'),
+    path('manage/content/text/<int:content_id>/',ManageContentDetail.as_view(
+        {'put':'text_update'}
+    ),name='manage_content_update_text'),
+    path('manage/content/image/<int:content_id>/',ManageContentDetail.as_view(
+        {'put':'image_update'}
+    ),name='manage_content_update_image'),
+    path('manage/content/file/<int:content_id>/',ManageContentDetail.as_view(
+        {'put':'file_update'}
+    ),name='manage_content_update_file'),
+    path('manage/content/video/<int:content_id>/',ManageContentDetail.as_view(
+        {'put':'video_update'}
+    ),name='manage_content_update_video'),
+    path('manage/content/<str:content_type>/<int:content_id>/',ManageContentDetail.as_view({'delete':'destroy'}),name='manage_content_delete'),
+    #student
     path('enrolled/courses/',StudentViewSet.as_view({'get':'list_enrolled'}),name='enrolled_course_list'),
     path('enrolled/courses/<int:page_number>/',StudentViewSet.as_view({'get':'list_enrolled'}),name='enrolled_course_list_page'),
     path('enrolled/course/<int:course_id>/',StudentViewSet.as_view({'get':'course_detail'}),name='enrolled_course_detail'),

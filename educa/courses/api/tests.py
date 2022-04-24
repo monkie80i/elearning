@@ -862,7 +862,7 @@ class ManageContentTestCase(MyTestCase):
         data = encode_multipart(BOUNDARY,{
             'file':self.get_default_image_path()
         })
-        resp = self.c.put(reverse_lazy('api:manage_content_detail',args=['file',content.object_id]),data=data,content_type=MULTIPART_CONTENT)
+        resp = self.c.put(reverse_lazy('api:manage_content_update_file',args=[content.object_id]),data=data,content_type=MULTIPART_CONTENT)
         response_file = json.loads(resp.content)
         #print(response_file,resp.status_code)
         self.assertNotEqual(content.item.file.url,response_file['item']['file'])
@@ -876,7 +876,7 @@ class ManageContentTestCase(MyTestCase):
         data ={
             'content':'New Contest herre'
         }
-        resp = self.c.put(reverse_lazy('api:manage_content_detail',args=['text',content1.id]),data=data)
+        resp = self.c.put(reverse_lazy('api:manage_content_update_text',args=[content1.id]),data=data)
         response_file = json.loads(resp.content)
         #print(response_file,resp.status_code)
         self.assertNotEqual(content['content'],response_file['item']['content'])
@@ -892,7 +892,7 @@ class ManageContentTestCase(MyTestCase):
         self.assertEqual(c1,b)
 
     def make_delete_req(self,content_type,content_id):
-        resp = self.c.delete(reverse_lazy('api:manage_content_detail',args=[content_type,content_id]))
+        resp = self.c.delete(reverse_lazy('api:manage_content_delete',args=[content_type,content_id]))
         return json.loads(resp.content),resp.status_code
 
     def test_content_delete(self):
