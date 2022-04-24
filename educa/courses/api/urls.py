@@ -24,7 +24,13 @@ urlpatterns = [
     path('manage/course/<int:course_id>/module/',ManageModuleCreate.as_view(),name='manage_module_create'),
     path('manage/module/<int:module_id>/',ManageModuleDetail.as_view(),name='manage_module_detail'),
     path('manage/module/<int:module_id>/content/',ManageContentList.as_view({'get':'list'}),name='manage_content_list'),
-    path('manage/module/<int:module_id>/content/<str:content_type>/',ManageContentList.as_view({'post':'create'}),name='manage_content_create'),
+    #path('manage/module/<int:module_id>/content/<str:content_type>/',ManageContentList.as_view({'post':'create'}),name='manage_content_create'),
+    # create content
+    path('manage/module/<int:module_id>/content/text/',ManageContentList.as_view({'post':'text_create'}),name='manage_content_create_text'),
+    path('manage/module/<int:module_id>/content/image/',ManageContentList.as_view({'post':'image_create'}),name='manage_content_create_image'),
+    path('manage/module/<int:module_id>/content/file/',ManageContentList.as_view({'post':'file_create'}),name='manage_content_create_file'),
+    path('manage/module/<int:module_id>/content/video/',ManageContentList.as_view({'post':'video_create'}),name='manage_content_create_video'),
+    #Content update and delete
     path('manage/content/<str:content_type>/<int:content_id>/',ManageContentDetail.as_view(),name='manage_content_detail'),
     path('enrolled/courses/',StudentViewSet.as_view({'get':'list_enrolled'}),name='enrolled_course_list'),
     path('enrolled/courses/<int:page_number>/',StudentViewSet.as_view({'get':'list_enrolled'}),name='enrolled_course_list_page'),

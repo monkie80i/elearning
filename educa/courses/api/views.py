@@ -16,7 +16,8 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import APIException,NotFound,PermissionDenied
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
-
+from .schemas import text_content_resp,image_content_resp,file_content_resp,video_content_resp
+from .schemas import text_req_body_schema,image_req_body_schema,file_req_body_schema,video_req_body_schema
 #helper functions
 def has_subject_slug_in_parameter(*args, **kwargs):
     """IF there isa subject slug in kargs return it or else retutn 0"""
@@ -96,16 +97,20 @@ class PaginateNewMIxin(object):
             return self.paginated_qs
         
 
+# the views go here
+
 class SubjectViewSet(APIView):
     def get_queryset(self):
         return Subject.objects.all()
     
     def get(self,request):
+        """Lists all the subjects in the app"""
         serializer = SubjectSerializer(self.get_queryset() ,many=True)
         return Response(serializer.data)
 
     @swagger_auto_schema(request_body=SubjectSerializer)
     def post(self,request):
+        """Create a subject"""
         if request.user.is_authenticated and request.user.is_superuser:
             serializer = SubjectSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -121,6 +126,7 @@ class CoursePublicViewSet(PaginateViewSetMixin,viewsets.ViewSet):
     page_size = 5
 
     def list(self,request,*args, **kwargs):
+        """The public view of all the courses"""
         output = {}
         if 'page_number' in kwargs:
             self.page_number = kwargs['page_number']
@@ -147,6 +153,7 @@ class CoursePublicViewSet(PaginateViewSetMixin,viewsets.ViewSet):
         return Response(output,status=status.HTTP_200_OK)
 
     def retrieve(self,request,course_id=None):
+        """The public view of details of a course"""
         try:
             course = Course.objects.get(id=course_id)
         except:
@@ -176,7 +183,9 @@ class ManageCourseViewSet(PaginateNewMIxin,viewsets.ViewSet):
         return Course.objects.filter(user= request.user)
 
     # for teacher
+    @swagger_auto_schema(responses={status.HTTP_200_OK:ManageCourseMinSzr(many=True)})
     def list(self,request,*args, **kwargs):
+        """lists the courses created by the logged in teacher"""
         self.queryset = self.get_queryset(request)
         subject_slug = has_subject_slug_in_parameter(*args, **kwargs)
         if subject_slug is not None:
@@ -186,29 +195,34 @@ class ManageCourseViewSet(PaginateNewMIxin,viewsets.ViewSet):
         self.output['courses'] = serializer.data
         return Response(self.output,status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(responses={status.HTTP_200_OK:CourseSerializer})
     def retrieve(self,request,course_id=None):
+        """retrieves a single courses created by the logged in teacher"""
         course = get_object_or_404(Course,id=course_id,user=request.user)
         serializer = CourseSerializer(course)
         return Response(serializer.data,status=status.HTTP_200_OK)
 
     from .schemas import CourseCreateRequest
-    @swagger_auto_schema(request_body=CourseCreateRequest,responses={status.HTTP_200_OK:CourseSerializer})
+    @swagger_auto_schema(request_body=CourseCreateRequest,responses={status.HTTP_201_CREATED:CourseSerializer})
     def create(self,request):
+        """Creates a new course"""
         serializer = CourseSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         return Response(serializer.data,status=status.HTTP_201_CREATED)
 
-    @swagger_auto_schema(request_body=CourseSerializer)
+    @swagger_auto_schema(request_body=CourseSerializer,responses={status.HTTP_205_RESET_CONTENT:CourseSerializer})
     def update(self,request,course_id=None):
+        """Updates a course fully"""
         course = get_object_or_404(Course,id=course_id,user=request.user)
         serializer = CourseSerializer(instance=course,data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data,status=status.HTTP_205_RESET_CONTENT)
     
-    @swagger_auto_schema(request_body=CourseSerializer)
+    @swagger_auto_schema(request_body=CourseSerializer,responses={status.HTTP_206_PARTIAL_CONTENT:CourseSerializer})
     def partial_update(self,request,course_id=None):
+        """Updates a course partially"""
         course = get_object_or_404(Course,id=course_id,user=request.user)
         serializer = CourseSerializer(instance=course,data=request.data,partial=True)
         serializer.is_valid(raise_exception=True)
@@ -221,14 +235,15 @@ class ManageCourseViewSet(PaginateNewMIxin,viewsets.ViewSet):
             course.delete()
         except Exception as e:
             return Response({'detail':e},status=status.HTTP_409_CONFLICT)
-        return Response({'detail':'Course deleted'},status=status.HTTP_200_OK)
+        return Response({'detail':'Course deleted'},status=status.HTTP_204_NO_CONTENT)
 
 
 class ManageModuleCreate(APIView):
     permission_classes = [IsTeacher]
     
+    @swagger_auto_schema(request_body=ModuleSerializer,responses={status.HTTP_201_CREATED:ModuleSerializer})
     def post(self, request,course_id=None, *args, **kwargs):
-        # create
+        """Create a module ,inside a course of the provided course_id"""
         try:
             course = Course.objects.get(id=course_id,user=request.user)
         except ObjectDoesNotExist:
@@ -241,8 +256,9 @@ class ManageModuleCreate(APIView):
 class ManageModuleDetail(APIView):
     permission_classes = [IsTeacher]
 
+    @swagger_auto_schema(responses={status.HTTP_200_OK:ModuleSerializer})
     def get(self, request,module_id=None, *args, **kwargs):
-        # detail View
+        """Retrieve the details of a single module, that belongs to the logged in user"""
         try:
             module = Module.objects.get(id=module_id,course__user=request.user)
         except ObjectDoesNotExist:
@@ -250,9 +266,9 @@ class ManageModuleDetail(APIView):
         serializer = ModuleSerializer(module)
         return Response(serializer.data,status=status.HTTP_200_OK)
     
-    
+    @swagger_auto_schema(request_body=ModuleSerializer,responses={status.HTTP_205_RESET_CONTENT:ModuleSerializer})
     def put(self, request,module_id=None,*args, **kwargs):
-        # update
+        """Update the details of a single module, that belongs to the logged in user"""
         try:
             module = Module.objects.get(id=module_id,course__user=request.user)
         except ObjectDoesNotExist:
@@ -262,8 +278,9 @@ class ManageModuleDetail(APIView):
         serializer.save()
         return Response(serializer.data,status=status.HTTP_205_RESET_CONTENT)
     
+    @swagger_auto_schema(request_body=ModuleSerializer,responses={status.HTTP_206_PARTIAL_CONTENT:ModuleSerializer})
     def patch(self, request,module_id=None, *args, **kwargs):
-        #partial update
+        """Partially update the details of a single module, that belongs to the logged in user"""
         try:
             module = Module.objects.get(id=module_id,course__user=request.user)
         except ObjectDoesNotExist:
@@ -274,7 +291,7 @@ class ManageModuleDetail(APIView):
         return Response(serializer.data,status=status.HTTP_206_PARTIAL_CONTENT)
     
     def delete(self, request,module_id=None, *args, **kwargs):
-        #delete
+        """Deletes a single module, that belongs to the logged in user"""
         try:
             module = Module.objects.get(id=module_id,course__user=request.user)
         except ObjectDoesNotExist:
@@ -283,7 +300,7 @@ class ManageModuleDetail(APIView):
             module.delete()
         except Exception as e:
             return Response({'detail':e},status=status.HTTP_409_CONFLICT)
-        return Response({'detail':'Module deleted'},status=status.HTTP_200_OK)
+        return Response({'detail':'Module deleted'},status=status.HTTP_204_NO_CONTENT)
 
 content_serializer = {
     'text': TextSerializer,
@@ -291,10 +308,14 @@ content_serializer = {
     'file': FileSerializer,
     'video':VideoSerializer
 }
-
+from rest_framework import parsers
 class ManageContentList(viewsets.ViewSet):
     permission_classes = [IsTeacher]
+    #parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.FileUploadParser)    
 
+    
+
+    #@swagger_auto_schema(responses={status.HTTP_200_OK:ManageCourseMinSzr(many=True)})
     def list(self, request,module_id=None, *args, **kwargs):
         try:
             module = Module.objects.get(id=module_id,course__user = request.user)
@@ -312,8 +333,8 @@ class ManageContentList(viewsets.ViewSet):
         output['contents'] = contents
         output['content_count'] = content_count
         return Response(output,status=status.HTTP_200_OK)
-    
-    def create(self, request,module_id=None,content_type=None, *args, **kwargs):
+
+    def create(self,request,module_id,content_type):
         try:
             module = Module.objects.get(id=module_id,course__user = request.user)
         except ObjectDoesNotExist:
@@ -330,6 +351,25 @@ class ManageContentList(viewsets.ViewSet):
         content.save()
         content_szr = serializer_content(content)
         return Response(content_szr,status=status.HTTP_201_CREATED)
+    
+    @swagger_auto_schema(request_body=text_req_body_schema,responses={status.HTTP_201_CREATED:text_content_resp})
+    def text_create(self, request,module_id):
+        return self.create(request,module_id,'text')
+
+    @swagger_auto_schema(request_body=image_req_body_schema,responses={status.HTTP_201_CREATED:image_content_resp})
+    def image_create(self, request,module_id):
+        return self.create(request,module_id,'image')
+        
+    @swagger_auto_schema(request_body=file_req_body_schema,responses={status.HTTP_201_CREATED:file_content_resp})
+    def file_create(self, request,module_id):
+        return self.create(request,module_id,'file')
+        
+    @swagger_auto_schema(request_body=video_req_body_schema,responses={status.HTTP_201_CREATED:video_content_resp})
+    def video_create(self, request,module_id):
+        return self.create(request,module_id,'video')
+        
+    
+    
 
 class ManageContentDetail(APIView):
     permission_classes = [IsTeacher]

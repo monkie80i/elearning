@@ -204,7 +204,7 @@ class ModuleSerializer(serializers.ModelSerializer):
             'title': {'required': True},
             'description': {'required': True},
         }"""
-        read_only_fields = ['id','course','contents']
+        read_only_fields = ['id','course','contents','order']
     
     def update(self,instance, validated_data,*args, **kwargs):
         #if 'partial' in kwargs:
@@ -217,7 +217,7 @@ class ModuleSerializer(serializers.ModelSerializer):
 class ContentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Content
-        exclude = ['created','updated']
+        exclude = ['created','updated','object_id','content_type']
 
 class ItemSerializer(serializers.ModelSerializer):
     content_type = serializers.CharField(source="_meta.model_name",read_only=True)

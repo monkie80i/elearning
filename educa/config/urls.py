@@ -25,7 +25,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view 
 from drf_yasg import openapi 
 
-schema_view = get_schema_view(
+schema_view_v1 = get_schema_view(
     openapi.Info(
         title="Egyan API",
         default_version="v1",
@@ -38,13 +38,15 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('superadmin/',admin_site.urls),
     path('',include('adminManager.urls')),
     path('',include('courses.urls')), 
     path('webpack-test/',TemplateView.as_view(template_name='test.html')),
-    path('api/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('api/', schema_view_v1.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/auth/', include('dj_rest_auth.urls')),
 ]
 if settings.DEBUG:

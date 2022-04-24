@@ -163,4 +163,6 @@ REST_FRAMEWORK = {
         'utils.authentication.CustomTokenAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning'
 }
+

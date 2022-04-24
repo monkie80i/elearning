@@ -791,7 +791,7 @@ class ManageContentTestCase(MyTestCase):
         data = {
             'content': 'Poyedaa'
         }
-        resp = self.c.post(reverse_lazy('api:manage_content_create',args=[module.id,'text']),data=data)
+        resp = self.c.post(reverse_lazy('api:manage_content_create_text',args=[module.id]),data=data)
         response1 = json.loads(resp.content)
         #print(json.dumps(response1,indent=4),resp.status_code)
         resp = self.c.get(reverse_lazy('api:manage_content_list',args=[module.id]))
@@ -823,13 +823,13 @@ class ManageContentTestCase(MyTestCase):
         }
         my_contents = []
         #create text
-        resp = self.c.post(reverse_lazy('api:manage_content_create',args=[module.id,'text']),data=text_data)
+        resp = self.c.post(reverse_lazy('api:manage_content_create_text',args=[module.id]),data=text_data)
         response_text = json.loads(resp.content)
         my_contents.append(response_text)
         #print(json.dumps(response_text,indent=4),resp.status_code)
         
         #create File
-        resp = self.c.post(reverse_lazy('api:manage_content_create',args=[module.id,'file']),data=file_data,content_type=MULTIPART_CONTENT)
+        resp = self.c.post(reverse_lazy('api:manage_content_create_file',args=[module.id]),data=file_data,content_type=MULTIPART_CONTENT)
         response_file = json.loads(resp.content)
         #print(resp.content,resp.status_code)
         #print(json.dumps(response_file,indent=4),resp.status_code)
@@ -837,14 +837,14 @@ class ManageContentTestCase(MyTestCase):
 
 
         #create Image
-        resp = self.c.post(reverse_lazy('api:manage_content_create',args=[module.id,'image']),data=image_data,content_type=MULTIPART_CONTENT)
+        resp = self.c.post(reverse_lazy('api:manage_content_create_image',args=[module.id]),data=image_data,content_type=MULTIPART_CONTENT)
         response_image = json.loads(resp.content)
         #print(resp.content,resp.status_code)
         #print(json.dumps(response_image,indent=4),resp.status_code)
         my_contents.append(response_image)
 
         #create Video
-        resp = self.c.post(reverse_lazy('api:manage_content_create',args=[module.id,'video']),data=video_data)
+        resp = self.c.post(reverse_lazy('api:manage_content_create_video',args=[module.id]),data=video_data)
         response_video = json.loads(resp.content)
         #print(resp.content,resp.status_code)
         #print(json.dumps(response_video,indent=4),resp.status_code)
